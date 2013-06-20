@@ -27,6 +27,7 @@
 # -Frost
 
 import CONSTANTS
+import random
 
 ############# Classes related to User interface #################
 class Application():
@@ -103,17 +104,6 @@ class Game():
     
     def saveGame(self):
         return
-    
-class Utility():
-    """
-    Reusable utilities and logic go here
-    At the moment I don't see the need for sub classes 
-    """
-    #examples
-    # random number generator
-    # rolling a hitdie
-    # debug messages
-
  
 ##########
 # LEVELS #
@@ -198,6 +188,7 @@ class GeneratedLevel(Level):
         super(GeneratedLevel,self).__init__(owner, difficulty)
         #generate the map
         self._map = Map(CONSTANTS.MAP_WIDTH,CONSTANTS.MAP_HEIGHT)
+        self.map.generateMap()
 
 class TownLevel(Level):
     """
@@ -261,14 +252,10 @@ class Map():
         """
         return self._exitTile
     
-    #Constants used to generate map
-    ROOM_MAX_SIZE = 10
-    ROOM_MIN_SIZE = 6
-    MAX_ROOMS = 30
-
+    #constructor
     def __init__(self, MapWidth, MapHeight):
         """
-        Constructor to create a new map
+        Constructor to create a new empty map
         Arguments
             MapWidth - Map width in tiles
             MapHeight - Map height in tiles
@@ -277,13 +264,81 @@ class Map():
         self._tiles = [[ Tile(map,x,y)
                for y in range(MapHeight) ]
            for x in range(MapWidth) ]
+    
+    #functions
+    def generateMap(self):
+        """
+        generate a random map
+        """    
         
-        #Block the entire map
-        #for y in range(MapHeight):
-            #for x in range(MapWidth):
-                #myTile = self.tiles[x][y]
-                #myTile.blocked = True
-                #myTile.blockSight = True
+        #Constants used to generate map
+        ROOM_MAX_SIZE = 10
+        ROOM_MIN_SIZE = 6
+        MAX_ROOMS = 30    
+    
+        #Create a new map with empty tiles
+        self._tiles = [[ Tile(map,x,y)
+               for y in range(self.height) ]
+           for x in range(self.width) ]
+        
+        #Block all tiles
+        for y in range(self.height):
+            for x in range(self.width):
+                myTile = self.tiles[x][y]
+                myTile.blocked = True
+                myTile.blockSight = True
+        
+        #cut out rooms
+        rooms = []
+        num_rooms = 0
+ 
+        for r in range(MAX_ROOMS):
+            #random width and height
+            w = random.randrange(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+            h = random.randrange(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+            #random position without going out of the boundaries of the map
+            x = random.randrange(0, self.width - w - 1)
+            y = random.randrange(0, self.height - h - 1)
+            #create a new room
+            new_room = Room(x, y, w, h)
+
+            #abort if room intersects with existing room
+            for other_room in rooms:
+                if new_room.intersect(other_room):
+                    break
+
+            #cut it out of the map
+            #go through the tiles in the room and make them passable
+            for x in range(new_room.x1 + 1, new_room.x2):
+                for y in range(new_room.y1 + 1, new_room.y2):
+                    self.tiles[x][y].blocked = False
+                    self.tiles[x][y].blockSight = False
+ 
+            #create corridors
+            """
+            if num_rooms == 0:
+                #this is the first room
+            else:
+                #all rooms after the first:
+                #connect it to the previous room with a tunnel
+ 
+                #center coordinates of previous room
+                (prev_x, prev_y) = rooms[num_rooms-1].center()
+ 
+                #draw a coin (random number that is either 0 or 1)
+                if libtcod.random_get_int(0, 0, 1) == 1:
+                    #first move horizontally, then vertically
+                    create_h_tunnel(prev_x, new_x, prev_y)
+                    create_v_tunnel(prev_y, new_y, new_x)
+                else:
+                    #first move vertically, then horizontally
+                    create_v_tunnel(prev_y, new_y, prev_x)
+                    create_h_tunnel(prev_x, new_x, new_y)
+            """
+ 
+            #finally, append the new room to the list
+            rooms.append(new_room)
+            num_rooms += 1
     
 class Room():
     """
@@ -385,11 +440,58 @@ class Tile():
         self._map = map
         self._x = x
         self._y = y
+
+##########
+# ACTORS #
+##########
+class Actor(object):
+    """
+    Base class for everything that can occur in the gameworld.
+    Example sub classes: Items and Characters.
+    """
+    
+    #class variables
+    _id = "ID not set"
+    @property
+    def id(self):
+        """
+        ID code for this Actor
+        """
+        return self._id
+    
+    _baseMaxHitPoints = 0
+    @property
+    def maxHitPoints(self):
+        """
+        Maximum hitpoints of this Actor
+        """  
+        bonus = 0
+        #TODO
+        #return actual max_hp, by summing up the bonuses from all equipped items
+        #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+        return self._baseMaxHitPoints + bonus
+
+    _currentHitPoints = 0
+    @property
+    def currentHitPoints(self):
+        """
+        The current amount of hitpoints
+        """
+        return self._currentHitPoints
+    @currentHitPoints.setter
+    def currentHitPoints(self, hitPoints):
+        if hitPoints > self.maxHitPoints:
+            self._currentHitPoints = self.maxHitPoints
+        else:
+            self._currentHitPoints = hitPoints
+        
+    #Constructor
+    #TODO
             
 ##############
 # CHARACTERS #
 ##############
-class Character(object):
+class Character(Actor):
     """
     Base class for characters that can move around and interact
     Should probably not be instatiated but describes the general interface of 
@@ -433,7 +535,68 @@ class Character(object):
         Returns tile on which this character is located (might be None)
         """
         return self._tile
-        
+    
+    _basePower = 0
+    @property
+    def power(self):
+        """
+        Return attack power
+        """
+        bonus = 0
+        #TODO
+        #return actual power, by summing up the bonuses from all equipped items
+        #bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
+        return self._basePower + bonus
+ 
+    _baseDefense = 0
+    @property
+    def defense(self):  
+        """
+        Return defense value
+        """
+        bonus = 0
+        #TODO
+        #return actual defense, by summing up the bonuses from all equipped items
+        #bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_defense + bonus
+  
+    #Constructor
+    #TODO
+    
+    #Functions
+    def attack(self, target):
+        #a simple formula for attack damage
+        damage = self.power - target.fighter.defense
+ 
+        if damage > 0:
+            #make the target take some damage
+            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+            target.fighter.take_damage(damage,self)
+        else:
+            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+ 
+    def take_damage(self, damage, attacker):
+        global killerrabbit_death, wearing_amulet
+        # are we immune from rabbits?
+        if attacker.owner.name == 'killerrabbit' and wearing_amulet:
+            message('The Amulet of the Flying Circus protects you!')
+            return
+        #apply damage if possible
+        if damage > 0:
+            self.hp -= damage
+ 
+            #check for death. if there's a death function, call it
+            if self.hp <= 0:
+                function = self.death_function
+                if function is not None:
+                    function(self.owner,attacker)
+ 
+    def heal(self, amount):
+        #heal by the given amount, without going over the maximum
+        self.hp += amount
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
+
 class Player(Character):
     """
     Sub class representing a player
@@ -472,7 +635,7 @@ class Monster(Character):
 #########
 # ITEMS #
 #########
-class Item(object):
+class Item(Actor):
     """
     Base class for items
     Should probably not be instatiated but describes the general interface of 
@@ -623,6 +786,52 @@ class ConfusedMonsterAI(AI):
     AI sub class that provides AI implementation for confused monsters.
     """
 
+####################
+# Inventory system #
+####################
+#TODO
 
+######################
+# Magic/Event system #
+######################
+class Effect(object):
+    """
+    Base class for more specialized events, melee or magic effects.
+    """
+    
+    #class variables
+    _id = "ID not set"
+    @property
+    def id(self):
+        """
+        ID code for this Effect
+        """
+        return self._id
+
+class MagicEffect(Effect):
+    """
+    Base class for magic effects.
+    """
+    #current thinking is that this class can both represent targeted as area
+    #of effect spells.
+
+
+#########################
+# Game log for messages #
+#########################
+#TODO
+
+#########
+# OTHER #
+#########
+class Utility():
+    """
+    Reusable utilities and logic go here
+    At the moment I don't see the need for sub classes 
+    """
+    #examples
+    # rolling a hitdie
+    # debug messages
+    
 if __name__ == '__main__':
     print("There is not much sense in running this file.")

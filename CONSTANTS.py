@@ -9,3 +9,8 @@ Note that all constants are CAPITAL letters only for clarity.
 #size of the map
 MAP_WIDTH = 85
 MAP_HEIGHT = 43
+
+#field of view
+FOV_ALGO = 0  #default FOV algorithm
+FOV_LIGHT_WALLS = True  #light walls or not
+TORCH_RADIUS = 10
