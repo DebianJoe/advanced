@@ -26,8 +26,15 @@
 #
 # -Frost
 
+#Load custom modules
 import CONSTANTS
+import Utility
+
+#Load system modules
 import random
+import ConfigParser
+
+import json #used to load tables from strings
 
 ############# Classes related to User interface #################
 class Application():
@@ -80,6 +87,14 @@ class Game():
         """
         return self.levels[self._currentLevel]
     
+    _monsterLibrary = None
+    @property
+    def monsterLibrary(self):
+        """
+        Returns the monster library used by this game.
+        """
+        return self._monsterLibrary
+        
     #constructor
     def __init__(self, owner):
         """
@@ -88,6 +103,12 @@ class Game():
             owner - Application object that owns this game
         """
         self._application = owner
+        
+        #initialize monster library
+        config = ConfigParser.ConfigParser()
+        config.read(CONSTANTS.MONSTER_CONFIG)
+        self._monsterLibrary = MonsterLibrary(config)
+        #reset Game
         self.resetGame()
         
     #functions (not exhaustive)
@@ -188,8 +209,38 @@ class GeneratedLevel(Level):
         super(GeneratedLevel,self).__init__(owner, difficulty)
         #generate the map
         self._map = Map(CONSTANTS.MAP_WIDTH,CONSTANTS.MAP_HEIGHT)
-        self.map.generateMap()
-
+        #add some monsters
+        self.placeMonsters()
+    
+    def placeMonsters(self):
+        """
+        This function will place monsters on this level depending on the 
+        difficulty level and using the MonsterLibrary in the Game
+        """
+        #Grab the MonsterLibrary
+        lib = self.game.monsterLibrary
+        #max number of monsters per room
+        max_monsters = lib.getMaxMonstersPerRoomForDifficulty(self.difficulty)
+        
+        #generate monsters for every room
+        for room in self.map.rooms:
+            #choose random number of monsters to create
+            num_monsters = random.randrange(0, max_monsters)
+            for i in range(num_monsters):
+                #choose random spot for new monster
+                x = random.randrange(room.x1+1, room.x2-1)
+                y = random.randrange(room.y1+1, room.y2-1)
+                target_tile = self.map.tiles[x][y]
+     
+                #only place it if the tile is not blocked and empty
+                if not target_tile.blocked and target_tile.empty:
+                    
+                    # get a random monster
+                    new_monster = lib.getRandomMonster(self.difficulty)
+                    new_monster.moveTo(target_tile)
+                    
+                    self.characters.append(new_monster)
+        
 class TownLevel(Level):
     """
     Class representing a fixed town level
@@ -214,6 +265,14 @@ class Map():
         """
         return self._tiles
     
+    _rooms = None
+    @property
+    def rooms(self):
+        """
+        List of the rooms in this map.
+        """
+        return self._rooms
+        
     @property
     def width(self):
         """
@@ -262,8 +321,9 @@ class Map():
         """
         #Create a big empty map
         self._tiles = [[ Tile(map,x,y)
-               for y in range(MapHeight) ]
-           for x in range(MapWidth) ]
+            for y in range(MapHeight) ]
+            for x in range(MapWidth) ]
+        self.generateMap()
     
     #functions
     def generateMap(self):
@@ -277,7 +337,7 @@ class Map():
         MAX_ROOMS = 30    
     
         #Create a new map with empty tiles
-        self._tiles = [[ Tile(map,x,y)
+        self._tiles = [[ Tile(self,x,y)
                for y in range(self.height) ]
            for x in range(self.width) ]
         
@@ -289,7 +349,7 @@ class Map():
                 myTile.blockSight = True
         
         #cut out rooms
-        rooms = []
+        self._rooms = []
         num_rooms = 0
  
         for r in range(MAX_ROOMS):
@@ -303,7 +363,7 @@ class Map():
             new_room = Room(x, y, w, h)
 
             #abort if room intersects with existing room
-            for other_room in rooms:
+            for other_room in self.rooms:
                 if new_room.intersect(other_room):
                     break
 
@@ -314,35 +374,44 @@ class Map():
                     self.tiles[x][y].blocked = False
                     self.tiles[x][y].blockSight = False
  
-            #create corridors
-            """
-            if num_rooms == 0:
-                #this is the first room
-            else:
-                #all rooms after the first:
-                #connect it to the previous room with a tunnel
+            (new_x, new_y) = new_room.center()
+            
+            #create corridor towards previous room
+            if num_rooms > 0:
+                #all rooms after the first: connect to the previous room
  
                 #center coordinates of previous room
-                (prev_x, prev_y) = rooms[num_rooms-1].center()
+                (prev_x, prev_y) = self.rooms[num_rooms-1].center()
  
-                #draw a coin (random number that is either 0 or 1)
-                if libtcod.random_get_int(0, 0, 1) == 1:
-                    #first move horizontally, then vertically
-                    create_h_tunnel(prev_x, new_x, prev_y)
-                    create_v_tunnel(prev_y, new_y, new_x)
-                else:
+                #create a corridor
+                if random.randrange(0, 1) == 1:
                     #first move vertically, then horizontally
-                    create_v_tunnel(prev_y, new_y, prev_x)
-                    create_h_tunnel(prev_x, new_x, new_y)
-            """
- 
+                    self._createVerticalTunnel(prev_x, new_x, prev_y)
+                    self._createHorizontalTunnel(prev_y, new_y, new_x)
+                else:
+                    #first move horizontally, then vertically
+                    self._createHorizontalTunnel(prev_x, new_x, new_y)
+                    self._createVerticalTunnel(prev_y, new_y, prev_x)
+                     
             #finally, append the new room to the list
-            rooms.append(new_room)
+            self._rooms.append(new_room)
             num_rooms += 1
-    
+            
+    def _createHorizontalTunnel(self, x1, x2, y):
+        #horizontal tunnel. min() and max() are used in case x1>x2
+        for x in range(min(x1, x2), max(x1, x2) + 1):
+            self.tiles[x][y].blocked = False
+            self.tiles[x][y].blockSight = False
+     
+    def _createVerticalTunnel(self, y1, y2, x):
+        #vertical tunnel
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            self.tiles[x][y].blocked = False
+            self.tiles[x][y].blockSight = False
+
 class Room():
     """
-    Describes a rectangular section of a map
+    Describes a rectangular room on the map
     """
     #Frost: TODO: clean up properties and comments of this class
     
@@ -427,7 +496,26 @@ class Tile():
     @blockSight.setter
     def blockSight(self, blocksLineOfSight):
         self._blockSight = blocksLineOfSight
-            
+    
+    _actor = None
+    @property
+    def actor(self):
+        """
+        Returns actor on this tile (can be None).
+        """
+        return self._actor
+    @actor.setter
+    def actor(self, myActor):
+        self._actor = myActor
+    
+    @property
+    def empty(self):
+        """
+        Returns a boolean indicating if this tile is empty
+        """
+        if self._actor == None: return True
+        return False
+                    
     def __init__(self, map, x, y):
         """
         Constructor to create a new tile, all tiles are created empty
@@ -458,7 +546,15 @@ class Actor(object):
         ID code for this Actor
         """
         return self._id
-    
+
+    _name = "Name not set"
+    @property
+    def name(self):
+        """
+        Name of this Actor
+        """
+        return self._name
+            
     _baseMaxHitPoints = 0
     @property
     def maxHitPoints(self):
@@ -484,10 +580,41 @@ class Actor(object):
             self._currentHitPoints = self.maxHitPoints
         else:
             self._currentHitPoints = hitPoints
-        
+    
+    _char = None
+    @property
+    def char(self):
+        """
+        Returns a 1 char shorthand for this actor.
+        """
+        return self._char
+    
+    _tile = None
+    @property
+    def tile(self):
+        """
+        Returns the Tile on which this Actor is located. Can be None.
+        """
+        return self._tile
+                
     #Constructor
-    #TODO
-            
+    def __init__(self):
+        """
+        Creates a new basic Actor, normally not used
+        """
+        raise NotImplementedError( "Should not instatiate a base Actor object" )
+        
+    #functions
+    def __str__(self):
+        return self._name + " " + super(Actor,self).__str__()
+    
+    def moveTo(self, targetTile):
+        """
+        moves this actor to the targetTile
+        """
+        self._tile = targetTile
+        targetTile.actor = self
+                
 ##############
 # CHARACTERS #
 ##############
@@ -527,15 +654,15 @@ class Character(Actor):
         Includes equiped and unequiped items.
         """
         return self._inventoryItems.append(self._equipedItems)
-        
-    _tile = None
-    @property
-    def tile(self):
-        """
-        Returns tile on which this character is located (might be None)
-        """
-        return self._tile
     
+    _xpValue = 0
+    @property
+    def xpValue(self):
+        """
+        Return xp value
+        """
+        return self._xpValue
+        
     _basePower = 0
     @property
     def power(self):
@@ -631,6 +758,14 @@ class Monster(Character):
         Killed by message that can be shown if this monster kills the player.
         """
         return self._killedByText
+    
+    #constructor
+    def __init__(self):
+        """
+        Creates a new uninitialized Monster object.
+        Use MonsterLibrary.createMonster() to create an initialized Monster.
+        """
+        pass
         
 #########
 # ITEMS #
@@ -682,7 +817,7 @@ class Library(object):
         """
         Constructor to create a new library based on a config parser.
         Arguments
-        config - an initialised config parser
+            config - an initialised config parser
         """
         self._configParser = myConfigParser
         
@@ -721,28 +856,84 @@ class MonsterLibrary(Library):
         """
         Constructor to create a new monster library
         Arguments
-        config - an initialised config parser
+            config - an initialised config parser
         """
         #call super class constructor
         super(MonsterLibrary,self).__init__(myConfigParser)
     
-    def createMonster(self,x,y,monster_key):
+    def createMonster(self,monster_key):
         """
-        Function to build a new Monster.
+        Function to create and initialize a new Monster.
         Arguments
             monster_key - string that identifies a monster in the config file.
         """
         # load the monster data from the config
         monster_data = dict(self.configParser.items(monster_key))
         
+        # do not create multiple unique monsters
+        if monster_data['unique'] == 'True':
+            unique_ids = []
+            for unique_monster in self.uniques:
+                unique_ids.append(unique_monster.id)
+            if monster_key in unique_ids:
+                #This unique was already created, do nothing
+                return None
+        
         #create the monster based on monster_data
-        #TODO
-        newMonster =None
+        newMonster = Monster()
+        
+        #initialize all variables
+        #Actor components
+        newMonster._id = monster_key
+        newMonster._char = monster_data['char']
+        newMonster._baseMaxHitPoints = \
+                Utility.roll_hit_die(monster_data['hitdie'])
+        newMonster._currentHitPoints=newMonster._baseMaxHitPoints
+        newMonster._name = monster_key
+        #Character components    
+        newMonster._baseDefense = defense=int(monster_data['defense'])
+        newMonster._basePower = int(monster_data['power'])
+        newMonster._xpValue = int(monster_data['xp'])
+        #Monster components
+        newMonster._flavorText = monster_data['flavor']
+        newMonster._killedByText = monster_data['killed_by']
+
+        #TODO: missing logic here
+        #Actor._tile
+        #death_function=globals().get(monster_data['death_function'], None))
+        ##death_function=monster_data['death_function'])
+        #ai_class = globals().get(monster_data['ai_component'])
+        ##ai_component=monster_data['ai_component']
+        ## and this instanstiates it if not None
+        #ai_component = ai_class and ai_class() or None
         
         # register the monster
-        self.regularMonsters.append(newMonster)
+        if monster_data['unique'] == 'True':
+            self.uniqueMonsters.append(newMonster)
+        else:
+            self.regularMonsters.append(newMonster)
         return newMonster
-        
+    
+    def getMaxMonstersPerRoomForDifficulty(self, difficulty):
+        #maximum number of monsters per room
+        max_monsters = Utility.from_dungeon_level(
+                json.loads(self.configParser.get('lists', 'max monsters')),
+                difficulty)
+        return max_monsters
+
+    def getRandomMonster(self, difficulty):
+        #TODO: read these chances at creation time of the library
+        #chance of each monster
+        monster_chances = {}
+        for monster_name in self.configParser.get('lists', 'monster list').split(', '):
+            chance_table = json.loads(self.configParser.get(monster_name, 'chance'))
+            monster_chances[monster_name] = Utility.from_dungeon_level(chance_table,difficulty)
+
+        #create a random monster
+        choice = Utility.random_choice(monster_chances)
+        monster = self.createMonster(choice)
+        return monster            
+       
 ######
 # AI #
 ######
@@ -821,17 +1012,9 @@ class MagicEffect(Effect):
 #########################
 #TODO
 
-#########
-# OTHER #
-#########
-class Utility():
-    """
-    Reusable utilities and logic go here
-    At the moment I don't see the need for sub classes 
-    """
-    #examples
-    # rolling a hitdie
-    # debug messages
     
+
 if __name__ == '__main__':
     print("There is not much sense in running this file.")
+    import test_application
+    test_application.launch()

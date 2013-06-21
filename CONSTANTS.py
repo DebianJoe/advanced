@@ -14,3 +14,6 @@ MAP_HEIGHT = 43
 FOV_ALGO = 0  #default FOV algorithm
 FOV_LIGHT_WALLS = True  #light walls or not
 TORCH_RADIUS = 10
+
+#config files
+MONSTER_CONFIG= "dungeons.conf"
