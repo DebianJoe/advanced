@@ -5,6 +5,7 @@
 
 #TODO medium: this module should be made PEP8 compliant
 import random
+import math
 
 
 # rolling a hitdie
@@ -71,6 +72,18 @@ def message(message):
     #ideally would like several levels of messages (debug, detail, main)
     #that we we can only show relevant message level during gameplay
     print message
+
+
+def distanceBetween(actor1, actor2):
+    """
+    Calculate the euclidian distance (straightline) between two actors.
+    Arguments
+        actor1 - First actor
+        actor2 - Second actor
+    """
+    dx = actor1.tile.x - actor2.tile.x
+    dy = actor1.tile.y - actor2.tile.y
+    return math.sqrt(dx ** 2 + dy ** 2)
 
 
 class GameError(Exception):

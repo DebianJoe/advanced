@@ -314,6 +314,13 @@ class Tile():
         self._x = x
         self._y = y
 
+    def __str__(self):
+        """
+        Overrides object standard string representation.
+        This enables str(thisTile).
+        """
+        return '(' + str(self.x) + ',' + str(self.y) + ')'
+
     def addActor(self, myActor):
         """
         This function adds and actor to this tile

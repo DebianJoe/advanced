@@ -44,12 +44,22 @@ class Actor(object):
         return self._char
 
     _tile = None
+
     @property
     def tile(self):
         """
         Returns the Tile on which this Actor is located. Can be None.
         """
         return self._tile
+
+    _level = None
+
+    @property
+    def level(self):
+        """
+        Returns level on which this Actor is located. Can be None.
+        """
+        return self._level
 
     _baseMaxHitPoints = 0
     @property
@@ -90,19 +100,24 @@ class Actor(object):
         self._id = 'not set'
         self._name = 'Nameless'
         self._tile = None
+        self._level = None
 
     #functions
     def __str__(self):
         return self._name + " " + super(Actor,self).__str__()
 
-    def moveTo(self, targetTile):
+    def moveTo(self, targetLevel, targetTile):
         """
         moves this actor to the targetTile
         """
-        if self.tile != None:
+        if self.tile is not None:
             self.tile.removeActor(self)
         self._tile = targetTile
+        if self.level != None:
+            self.level.removeActor(self)
+        self._level = targetLevel
         targetTile.addActor(self)
+
 
 class Portal(Actor):
     """
@@ -196,6 +211,14 @@ class Character(Actor):
         #bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
         return self._baseDefense + bonus
 
+    _AI = None
+    @property
+    def AI(self):
+        """
+        Return AI associated to this character.
+        """
+        return self._AI
+
     #Constructor
     def __init__(self):
         """
@@ -210,6 +233,7 @@ class Character(Actor):
         self._equipedItems = []
         self._inventoryItems = []
         self._xpValue = 0
+        self._AI = None
 
     #Functions
     def attack(self, target):
@@ -263,6 +287,15 @@ class Character(Actor):
                     + str(amount) + ' hitpoints (current: '
                     + str(self.currentHitPoints) + ').')
 
+    def takeTurn(self):
+        """
+        Function to make this Character take one turn.
+        """
+        if self.AI is not None:
+            self.AI.takeTurn()
+        else:
+            print 'No AI available for ' + str(self)
+
 class Player(Character):
     """
     Sub class representing a player
@@ -275,9 +308,9 @@ class Player(Character):
         """
         Returns the current xp of the player.
         """
-    _level = 0
+    _playerLevel = 0
     @property
-    def level():
+    def playerLevel(self):
         """
         Returns the current level of the player.
         """
@@ -304,7 +337,7 @@ class Player(Character):
         self._xpValue = 0
         #Player components
         self._xp = 0
-        self._level = 1
+        self._playerLevel = 1
 
         #TODO: missing logic here
         #death_function=globals().get(monster_data['death_function'], None))
