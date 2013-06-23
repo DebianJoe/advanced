@@ -184,8 +184,6 @@ class Game():
         """
         for character in self.currentLevel.characters:
             character.takeTurn()
-            print str(character)
-            print str(character.currentHitPoints)
 
 if __name__ == '__main__':
     print("There is not much sense in running this file.")

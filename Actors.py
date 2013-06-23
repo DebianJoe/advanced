@@ -44,12 +44,22 @@ class Actor(object):
         return self._char
 
     _tile = None
+
     @property
     def tile(self):
         """
         Returns the Tile on which this Actor is located. Can be None.
         """
         return self._tile
+
+    _level = None
+
+    @property
+    def level(self):
+        """
+        Returns level on which this Actor is located. Can be None.
+        """
+        return self._level
 
     _baseMaxHitPoints = 0
     @property
@@ -90,18 +100,22 @@ class Actor(object):
         self._id = 'not set'
         self._name = 'Nameless'
         self._tile = None
+        self._level = None
 
     #functions
     def __str__(self):
         return self._name + " " + super(Actor,self).__str__()
 
-    def moveTo(self, targetTile):
+    def moveTo(self, targetLevel, targetTile):
         """
         moves this actor to the targetTile
         """
-        if self.tile != None:
+        if self.tile is not None:
             self.tile.removeActor(self)
         self._tile = targetTile
+        if self.level != None:
+            self.level.removeActor(self)
+        self._level = targetLevel
         targetTile.addActor(self)
 
 
@@ -294,9 +308,9 @@ class Player(Character):
         """
         Returns the current xp of the player.
         """
-    _level = 0
+    _playerLevel = 0
     @property
-    def level():
+    def playerLevel(self):
         """
         Returns the current level of the player.
         """
@@ -323,7 +337,7 @@ class Player(Character):
         self._xpValue = 0
         #Player components
         self._xp = 0
-        self._level = 1
+        self._playerLevel = 1
 
         #TODO: missing logic here
         #death_function=globals().get(monster_data['death_function'], None))

@@ -81,6 +81,18 @@ class Level(object):
         self._characters = []
         self._items = []
 
+    def removeActor(self, myActor):
+        """
+        Remove the provided actor from this level.
+        arguments
+            myActor - the actor that should be removed
+        """
+        for c in self.characters:
+            if c is myActor:
+                self.characters.remove(c)
+        for i in self.items:
+            if i is myActor:
+                self.items.remove(i)
 
 class GeneratedLevel(Level):
     """
@@ -121,7 +133,7 @@ class GeneratedLevel(Level):
             #find an empty tile in the room
             emptyTile = aRoom.getRandomEmptyTile()
         #place the actor on the empty tile
-        actor.moveTo(emptyTile)
+        actor.moveTo(self, emptyTile)
 
     def _placeMonsters(self):
         """
@@ -148,7 +160,7 @@ class GeneratedLevel(Level):
 
                     # get a random monster
                     new_monster = lib.getRandomMonster(self.difficulty)
-                    new_monster.moveTo(target_tile)
+                    new_monster.moveTo(self, target_tile)
 
                     self.characters.append(new_monster)
 
