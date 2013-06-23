@@ -3,6 +3,7 @@
 #from Maps import Tile
 
 import random
+import Utilities
 
 ##########
 # ACTORS #
