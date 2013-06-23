@@ -13,11 +13,11 @@ class Actor(object):
     Base class for everything that can occur in the gameworld.
     Example sub classes: Items and Characters.
     """
-    #Frostlock: I'm not completely happy with the name Actor but haven't 
+    #Frostlock: I'm not completely happy with the name Actor but haven't
     # found anything better yet :-)
-    # Also I added hitpoints on this level, every Actor can be destroyed, 
+    # Also I added hitpoints on this level, every Actor can be destroyed,
     # including items and portals.
-    
+
     #class variables
     _id = "ID not set"
     @property
@@ -34,7 +34,7 @@ class Actor(object):
         Name of this Actor
         """
         return self._name
-    
+
     _char = None
     @property
     def char(self):
@@ -42,7 +42,7 @@ class Actor(object):
         Returns a 1 char shorthand for this actor.
         """
         return self._char
-    
+
     _tile = None
     @property
     def tile(self):
@@ -50,19 +50,19 @@ class Actor(object):
         Returns the Tile on which this Actor is located. Can be None.
         """
         return self._tile
-    
+
     _baseMaxHitPoints = 0
     @property
     def maxHitPoints(self):
         """
         Maximum hitpoints of this Character (overrides Actor)
-        """  
+        """
         bonus = 0
-        #TODO medium: 
+        #TODO medium:
         #return actual max_hp, by summing up the bonuses from all equipped items
         #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
         return self._baseMaxHitPoints + bonus
-    
+
     _currentHitPoints = 0
     @property
     def currentHitPoints(self):
@@ -76,7 +76,7 @@ class Actor(object):
             self._currentHitPoints = self.maxHitPoints
         else:
             self._currentHitPoints = hitPoints
-                
+
     #Constructor
     def __init__(self):
         """
@@ -90,11 +90,11 @@ class Actor(object):
         self._id = 'not set'
         self._name = 'Nameless'
         self._tile = None
-        
+
     #functions
     def __str__(self):
         return self._name + " " + super(Actor,self).__str__()
-    
+
     def moveTo(self, targetTile):
         """
         moves this actor to the targetTile
@@ -108,7 +108,7 @@ class Portal(Actor):
     """
     This class can be used to represent portals in and out of a level
     """
-    
+
     _destination = None
     @property
     def destination(self):
@@ -116,21 +116,21 @@ class Portal(Actor):
         The level where this portal leads to
         """
         return self._destination
-                    
+
     def __init__(self, destination):
         """
         Constructor to create a new portal
         """
         super(Portal,self).__init__()
         self._destination = destination
-        
+
 ##############
 # CHARACTERS #
 ##############
 class Character(Actor):
     """
     Base class for characters that can move around and interact
-    Should probably not be instatiated but describes the general interface of 
+    Should probably not be instatiated but describes the general interface of
     a character
     Basic logic is in here, more specialised logic will be in the subclasses
     Every character has an AI that governs it
@@ -146,7 +146,7 @@ class Character(Actor):
         These are the unequiped items only.
         """
         return self._inventoryItems
-    
+
     _equipedItems = []
     @property
     def equipedItems(self):
@@ -155,7 +155,7 @@ class Character(Actor):
         These are the equiped items only.
         """
         return self._equipedItems
-        
+
     @property
     def allItems(self):
         """
@@ -163,7 +163,7 @@ class Character(Actor):
         Includes equiped and unequiped items.
         """
         return self._inventoryItems.append(self._equipedItems)
-    
+
     _xpValue = 0
     @property
     def xpValue(self):
@@ -171,7 +171,7 @@ class Character(Actor):
         Return xp value
         """
         return self._xpValue
-        
+
     _basePower = 0
     @property
     def power(self):
@@ -183,10 +183,10 @@ class Character(Actor):
         #include power bonuses of equipped items
         #bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
         return self._basePower + bonus
- 
+
     _baseDefense = 0
     @property
-    def defense(self):  
+    def defense(self):
         """
         Return defense value
         """
@@ -195,7 +195,7 @@ class Character(Actor):
         #include defense bonuses of equipped items
         #bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
         return self._baseDefense + bonus
-  
+
     #Constructor
     def __init__(self):
         """
@@ -210,7 +210,7 @@ class Character(Actor):
         self._equipedItems = []
         self._inventoryItems = []
         self._xpValue = 0
-    
+
     #Functions
     def attack(self, target):
         """
@@ -220,15 +220,15 @@ class Character(Actor):
         """
         #a simple formula for attack damage
         damage = self.power - target.defense
- 
+
         if damage > 0:
-            Utilities.message(self.name.capitalize() + ' attacks ' 
+            Utilities.message(self.name.capitalize() + ' attacks '
                     + target.name + ' for ' + str(damage) + ' Damage.')
             target.takeDamage(damage,self)
         else:
-            Utilities.message(self.name.capitalize() + ' attacks ' 
+            Utilities.message(self.name.capitalize() + ' attacks '
                     + target.name + ' but it has no effect!')
- 
+
     def takeDamage(self, amount, attacker):
         """
         function to take damage from an attacker
@@ -239,17 +239,17 @@ class Character(Actor):
         #apply damage if possible
         if amount > 0:
             self.currentHitPoints -= amount
-            Utilities.message(self.name.capitalize() + ' looses ' 
-                    + str(amount) + ' hitpoints (current: ' 
+            Utilities.message(self.name.capitalize() + ' looses '
+                    + str(amount) + ' hitpoints (current: '
                     + str(self.currentHitPoints) + ').')
- 
+
             #TODO
             #check for death. if there's a death function, call it
             #if self.hp <= 0:
              #   function = self.death_function
               #  if function is not None:
                #     function(self.owner,attacker)
- 
+
     def takeHeal(self, amount, attacker):
         """
         function to heal a given amount of hitpoints
@@ -259,8 +259,8 @@ class Character(Actor):
         #heal by the given amount
         if amount > 0:
             self.currentHitPoints += amount
-            Utilities.message(self.name.capitalize() + ' gains ' 
-                    + str(amount) + ' hitpoints (current: ' 
+            Utilities.message(self.name.capitalize() + ' gains '
+                    + str(amount) + ' hitpoints (current: '
                     + str(self.currentHitPoints) + ').')
 
 class Player(Character):
@@ -268,7 +268,7 @@ class Player(Character):
     Sub class representing a player
     """
     #class variables
-    
+
     _xp = 0
     @property
     def xp():
@@ -281,7 +281,7 @@ class Player(Character):
         """
         Returns the current level of the player.
         """
-        
+
     #constructor
     def __init__(self):
         """
@@ -290,7 +290,7 @@ class Player(Character):
         """
         #call super class constructor
         super(Player,self).__init__()
-                
+
         #initialize all variables
         #Actor components
         self._id = 'player'
@@ -298,14 +298,14 @@ class Player(Character):
         self._baseMaxHitPoints = 100
         self._currentHitPoints = 100
         self._name = random.choice(('Joe','Wesley','Frost'))
-        #Character components    
+        #Character components
         self._baseDefense = 2
         self._basePower = 2
         self._xpValue = 0
         #Player components
         self._xp = 0
         self._level = 1
-        
+
         #TODO: missing logic here
         #death_function=globals().get(monster_data['death_function'], None))
         ##death_function=monster_data['death_function'])
@@ -313,7 +313,7 @@ class Player(Character):
         ##ai_component=monster_data['ai_component']
         ## and this instanstiates it if not None
         #ai_component = ai_class and ai_class() or None
-            
+
     #functions
     def gainXp(self,amount):
         """
@@ -334,10 +334,10 @@ class NPC(Character):
 class Monster(Character):
     """
     Sub class representing a monster
-    Later we can consider more specialised subclasses 
+    Later we can consider more specialised subclasses
     for example Humanoid, Undead, Animal
     """
-    
+
     #Class variables
     _flavorText = "Flavor text not set"
     @property
@@ -346,7 +346,7 @@ class Monster(Character):
         Fancy description of the monster.
         """
         return self._flavorText
- 
+
     _killedByText = "Killed by text not set"
     @property
     def killedByText(self):
@@ -354,24 +354,24 @@ class Monster(Character):
         Killed by message that can be shown if this monster kills the player.
         """
         return self._killedByText
-    
+
     #constructor
     def __init__(self):
         """
         Creates a new uninitialized Monster object.
         Use MonsterLibrary.createMonster() to create an initialized Monster.
         """
-        #call super class constructor 
-        #(ensure instance gets unique copies of class variables) 
+        #call super class constructor
+        #(ensure instance gets unique copies of class variables)
         super(Monster,self).__init__()
-        
+
 #########
 # ITEMS #
 #########
 class Item(Actor):
     """
     Base class for items
-    Should probably not be instatiated but describes the general interface of 
+    Should probably not be instatiated but describes the general interface of
     an item
     """
 
