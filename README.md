@@ -1,4 +1,11 @@
-Opened repo for ADVANCED Crunchbang linux group.
+Welcome to the ADVANCED Crunchbang linux group repo.
+
+This repo contains a python implementation of a RogueLike.
+
+Main game logic is loaded via module Game.py which chain loads the other modules.
+
+The Application modules contain the graphical front-end to the game, these you can actually run.
+
 
 *Copyright (C) 2013 Joe Brock
 
