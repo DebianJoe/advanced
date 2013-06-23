@@ -118,6 +118,7 @@ class Game():
         Arguments
             owner - Application object that owns this game
         """
+        #Initialize class variables
         self._application = owner
         #reset Game
         self.resetGame()
@@ -129,6 +130,7 @@ class Game():
 
         #clear existing levels
         self._levels = []
+        self._currentLevel = 0
         #generate new levels
         previousLevel = None
         for i in range(0, 10):
@@ -175,6 +177,15 @@ class Game():
         """
         if self._currentLevel > 0:
             self._currentLevel -= 1
+
+    def playTurn(self):
+        """
+        This function will handle one complete turn.
+        """
+        for character in self.currentLevel.characters:
+            character.takeTurn()
+            print str(character)
+            print str(character.currentHitPoints)
 
 if __name__ == '__main__':
     print("There is not much sense in running this file.")

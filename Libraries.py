@@ -3,6 +3,7 @@
 import CONSTANTS
 import Utilities
 from Actors import *
+import AI
 
 #library/config file implementation
 import ConfigParser  # used for config file implementation
@@ -112,18 +113,10 @@ class MonsterLibrary(Library):
         newMonster._baseDefense = int(monster_data['defense'])
         newMonster._basePower = int(monster_data['power'])
         newMonster._xpValue = int(monster_data['xp'])
+        newMonster._AI = AI.BasicMonsterAI(newMonster)
         #Monster components
         newMonster._flavorText = monster_data['flavor']
         newMonster._killedByText = monster_data['killed_by']
-
-        #TODO: missing logic here
-        #Actor._tile
-        #death_function=globals().get(monster_data['death_function'], None))
-        ##death_function=monster_data['death_function'])
-        #ai_class = globals().get(monster_data['ai_component'])
-        ##ai_component=monster_data['ai_component']
-        ## and this instanstiates it if not None
-        #ai_component = ai_class and ai_class() or None
 
         # register the monster
         if monster_data['unique'] == 'True':

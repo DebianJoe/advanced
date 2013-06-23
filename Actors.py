@@ -104,6 +104,7 @@ class Actor(object):
         self._tile = targetTile
         targetTile.addActor(self)
 
+
 class Portal(Actor):
     """
     This class can be used to represent portals in and out of a level
@@ -196,6 +197,14 @@ class Character(Actor):
         #bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
         return self._baseDefense + bonus
 
+    _AI = None
+    @property
+    def AI(self):
+        """
+        Return AI associated to this character.
+        """
+        return self._AI
+
     #Constructor
     def __init__(self):
         """
@@ -210,6 +219,7 @@ class Character(Actor):
         self._equipedItems = []
         self._inventoryItems = []
         self._xpValue = 0
+        self._AI = None
 
     #Functions
     def attack(self, target):
@@ -262,6 +272,15 @@ class Character(Actor):
             Utilities.message(self.name.capitalize() + ' gains '
                     + str(amount) + ' hitpoints (current: '
                     + str(self.currentHitPoints) + ').')
+
+    def takeTurn(self):
+        """
+        Function to make this Character take one turn.
+        """
+        if self.AI is not None:
+            self.AI.takeTurn()
+        else:
+            print 'No AI available for ' + str(self)
 
 class Player(Character):
     """

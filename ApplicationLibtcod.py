@@ -5,7 +5,7 @@
 
 import libtcodpy as libtcod
 
-# You can import everyghin you need from module Game
+# You can import everything you need from module Game
 # the Game module will chain load other modules
 from Game import Game
 from Game import Player
@@ -65,6 +65,9 @@ class ApplicationLibtcod():
         return self.panelConsole
 
     def __init__(self):
+        """
+        Constructor that creates a new instance of the application
+        """
         #Initialize libtcod
         libtcod.console_set_custom_font('./media/arial10x10.png',
                 libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
@@ -79,9 +82,20 @@ class ApplicationLibtcod():
         #Create a new game object for this application
         self._game = Game(self)
 
-    def menuBox(self, header, options, width):
+    ##########################################################################
+    # show functions
+    #   These functions all use a similar technique to show something on screen
+    #       1) They store what was on screen before them
+    #       2) They show something new
+    #       3) They go into a loop handling user input
+    #       4) Once the loop breaks they restore what was on screen before them
+    #   This allows to create multiple menu's and screens on top of eachother
+    ##########################################################################
+    def showMenu(self, header, options, width):
         """
-        This function will show a menu.
+        This function will show a menu. The application waits for user input
+        before returning the selected option.
+        The function will return None if the user escapes the menu.
         Arguments
             header - String, text for the header
             options - String list, text for the options
@@ -113,16 +127,22 @@ class ApplicationLibtcod():
             y += 1
             letter_index += 1
 
-        #blit the contents of "window" to the root console
+        #Show in the middle of the screen
         x = SCREEN_WIDTH / 2 - width / 2
         y = SCREEN_HEIGHT / 2 - height / 2
+
+        #store the current view
+        behind_window = libtcod.console_new(width, height)
+        libtcod.console_blit(0, x, y, width, height, behind_window, 0, 0, 1.0, 1.0)
+
+        #blit the contents of "window" to the root console
         libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
 
         #present the root console to the player and wait for a key-press
         libtcod.console_flush()
+        returnMsg = ''
         while not libtcod.console_is_window_closed():
             key = libtcod.console_wait_for_keypress(True)
-
             #TODO: Remove in next libtcod version
             #Attention: dirty hack, bug in libtcod fires keypress twice...
             key = libtcod.console_wait_for_keypress(True)
@@ -131,52 +151,202 @@ class ApplicationLibtcod():
             index = key.c - ord('a')
             #if it corresponds to an option, return it
             if index >= 0 and index < len(options):
-                return index
+                returnMsg = index
+                break
             #if it is the escape key return None
             if key.vk == libtcod.KEY_ESCAPE:
-                print "Escape menu"
-                return None
+                returnMsg = None
+                break
 
-    def testMenu(self):
-        img = libtcod.image_load('./media/menu_background.png')
+        #Clean up (restore whatever was behind this window)
+        libtcod.console_blit(behind_window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
+        libtcod.console_flush()
+
+        return returnMsg
+
+    def showMessage(self, header, message, width):
+        """
+        This function will show a pop up message in the middle of the screen.
+        It waits for the user to acknowledge the message by hitting enter or
+        escape
+        """
+        #calculate total height for the header (after auto-wrap)
+        header_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, header)
+        if header == '':
+            header_height = 0
+        #calculate total height for the message (after auto-wrap)
+        msg_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, message)
+        if message == '':
+            msg_height = 0
+        height = header_height + msg_height
+
+        #create an off-screen console that represents the message window
+        window = libtcod.console_new(width, height)
+
+        #print the header, with auto-wrap
+        libtcod.console_set_default_foreground(window, libtcod.red)
+        libtcod.console_print_rect_ex(window, 0, 0, width, height, libtcod.BKGND_NONE, libtcod.LEFT, header)
+
+        #print the message, with auto-wrap
+        libtcod.console_set_default_foreground(window, libtcod.white)
+        libtcod.console_print_rect_ex(window, 0, header_height, width, height, libtcod.BKGND_NONE, libtcod.LEFT, message)
+
+        #center the pop up on the screen
+        x = SCREEN_WIDTH / 2 - width / 2
+        y = SCREEN_HEIGHT / 2 - height / 2
+
+        #store the current view
+        behind_window = libtcod.console_new(width, height)
+        libtcod.console_blit(0, x, y, width, height, behind_window, 0, 0, 1.0, 1.0)
+
+        #blit the contents of "window" to the root console
+        libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
+
+        #present the root console to the player and wait for a key-press
+        libtcod.console_flush()
+        #Loop until player accepts message using enter or escape
+        returnMsg = ''
+        while not libtcod.console_is_window_closed():
+            key = libtcod.console_wait_for_keypress(True)
+            #TODO: Remove in next libtcod version
+            #Attention: dirty hack, bug in libtcod fires keypress twice...
+            key = libtcod.console_wait_for_keypress(True)
+            #Wait for enter or escape
+            if key.vk == libtcod.KEY_ESCAPE:
+                returnMsg = 'Escape'
+                break
+            if key.vk == libtcod.KEY_ENTER:
+                returnMsg = 'Enter'
+                break
+
+        #Clean up (restore whatever was behind this window)
+        libtcod.console_blit(behind_window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
+        libtcod.console_flush()
+
+        return returnMsg
+
+    def showWelcomeScreen(self):
+        #store the current view
+        behind_window = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+        libtcod.console_blit(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, behind_window, 0, 0, 1.0, 1.0)
 
         #show the background image, at twice the regular console resolution
+        img = libtcod.image_load('./media/menu_background.png')
         libtcod.image_blit_2x(img, 0, 0, 0)
 
-        choice = None
-        while choice is None and not libtcod.console_is_window_closed():
+        while not libtcod.console_is_window_closed():
             #show options and wait for the player's choice
-            choice = self.menuBox('What option do you want to launch?',
-                        ['Run some test code!',     # Choice 0
-                        'Show me some game stuff!',       # Choice 1
-                        'Quit'],                   # Choice 2
+            choice = self.showMenu('Main menu:\n----------',
+                        ['Start a new game',       # Choice 0
+                        'Continue previous game',  # Choice 1
+                        'Go to debug mode',        # Choice 2
+                        'Quit'],                   # Choice 3
+                        36)
+            #interpret choice
+            if choice is None:
+                continue
+            if choice == 0:
+                print "Start a new game"
+                self.showMessage('Oops...',
+                        'I don\'t know how to run a new game yet :-)', 36)
+                continue
+            elif choice == 1:
+                print "Continue previous game"
+                self.showMessage('Oops...',
+                        'I don\'t know how to load a game yet :-)', 36)
+            elif choice == 2:  # quit
+                print "Go to debug mode"
+                self.showDebugScreen()
+
+            elif choice == 3:
+                print "Quiting"
+                break
+
+        #Clean up (restore whatever was behind this window)
+        libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
+        libtcod.console_flush()
+
+    def showDebugScreen(self):
+        #store the current view
+        behind_window = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+        libtcod.console_blit(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, behind_window, 0, 0, 1.0, 1.0)
+
+        #show the background image, at twice the regular console resolution
+        img = libtcod.image_load('./media/menu_debug.png')
+        libtcod.image_blit_2x(img, 0, 0, 0)
+
+        while not libtcod.console_is_window_closed():
+            #show options and wait for the player's choice
+            choice = self.showMenu('Select debug option:',
+                        ['Run some test code!',      # Choice 0
+                        'Show me some game stuff!',  # Choice 1
+                        'Back'],                     # Choice 2
                         36)
             #interpret choice
             if choice is None:
                 continue
             if choice == 0:
                 print "Running some test code!"
-                lib = MonsterLibrary()
-                myRandom = lib.getRandomMonster(2)
-                myRat = lib.createMonster('rat')
-                print myRat
-                print myRandom
-                myRat.attack(myRandom)
-                myRat.attack(myRandom)
-                myRat.attack(myRandom)
-                myRat.attack(myRandom)
-                myRat.attack(myRandom)
-                myRat.attack(myRandom)
-                myRat.attack(myRandom)
-                choice = None
+                self.runTestCode()
+                self.showMessage('Test code complete!',
+                        'There might be some output in the console...', 36)
+                continue
             elif choice == 1:
                 print "Showing some game stuff!"
                 self.newGame()
-                self.playGame()
+                self.showGameScreen()
             elif choice == 2:  # quit
-                print "Quiting"
-                return
+                print "Back"
+                break
+        #Clean up (restore whatever was behind this window)
+        libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
+        libtcod.console_flush()
 
+    def showGameScreen(self):
+        #store the current view
+        behind_window = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+        libtcod.console_blit(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, behind_window, 0, 0, 1.0, 1.0)
+
+        #main loop
+        while not libtcod.console_is_window_closed():
+            #render the screen
+            self.renderAll()
+            #refresh visual
+            libtcod.console_flush()
+
+            #handle keys and exit game if needed
+            if self.handleKeys() == 'exit':
+                break
+
+            #Play a turn
+            self.game.playTurn()
+
+
+
+        #Clean up (restore whatever was behind this window)
+        libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
+        libtcod.console_flush()
+
+    ##########################################################################
+    # DebugScreen functions
+    ##########################################################################
+    def runTestCode(self):
+        """
+        This function ties into the debug menu. It is meant to allow execution
+        of some test code. Feel free to change the contents of this function.
+        """
+        lib = MonsterLibrary()
+        myRandom = lib.getRandomMonster(2)
+        myRat = lib.createMonster('rat')
+        print myRat
+        print myRandom
+        myRat.attack(myRandom)
+        myRat.attack(myRandom)
+        myRat.attack(myRandom)
+
+    ##########################################################################
+    # GameScreen functions
+    ##########################################################################
     def newGame(self):
         self.game.resetGame()
 
@@ -259,32 +429,8 @@ class ApplicationLibtcod():
             print "< Going up"
             self.game.previousLevel()
 
-    def playGame(self):
-        mouse = libtcod.Mouse()
-        key = libtcod.Key()
-        #main loop
-        while not libtcod.console_is_window_closed():
 
-            #render the screen
-            self.renderAll()
-            #refresh visual
-            libtcod.console_flush()
-
-            #handle keys and exit game if needed
-            if self.handleKeys() == 'exit':
-                break
-
-            #TODO hard: actual play :-)
-            #at the moment this only shows some game stuff
-
-
-#########################################################################
-#Launching code
-#########################################################################
-def launch():
-    myApplication = ApplicationLibtcod()
-    myApplication.testMenu()
-
+#This is where it all starts!
 if __name__ == '__main__':
-    launch()
-#########################################################################
+    myApplication = ApplicationLibtcod()
+    myApplication.showWelcomeScreen()
