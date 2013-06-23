@@ -26,29 +26,33 @@
 #
 # -Frost
 
-#Load custom modules
+#Load proprietary modules
 import CONSTANTS
 import Utility
 
 #Load system modules
 import random
-import ConfigParser
 
-import json #used to load tables from strings
+#library/config file implementation
+import ConfigParser #used for config file implementation
+import json #used to load structured data like tables from strings
 
 ############# Classes related to User interface #################
-class Application():
+class Application(object):
     """
     This class represents a running instance of the application.
-    It connects the game logic to the user interface
+    It connects the game logic to the user interface. It should be inherited
+    by actual implementations of a graphical interface.
     """
 
-#If we implement our own graphical interface we will need to add 
-#a class structure for it.
+#Frostlock:
+#If we implement our own graphical interface we will probably need to add 
+#a class structure for it as well.
 #Also to facilitate the use of an external library (like libtcod or
 #pygame) we might need to add classes here.
-#I haven't done this yet. Currently experimenting with libtcod to 
+#I haven't done this yet. I'm currently experimenting with libtcod to 
 #see what would be needed.
+#In my case I have a "ApplicationLibtcod" class inheriting from this one.
 
 ############# Classes related to Game logic #################
 class Game():
@@ -79,6 +83,7 @@ class Game():
         Returns the list of levels in this game.
         """
         return self._levels
+    
     _currentLevel = 0
     @property
     def currentLevel(self):
@@ -102,30 +107,63 @@ class Game():
         Arguments
             owner - Application object that owns this game
         """
-        self._application = owner
-        
-        #initialize monster library
-        config = ConfigParser.ConfigParser()
-        config.read(CONSTANTS.MONSTER_CONFIG)
-        self._monsterLibrary = MonsterLibrary(config)
+        self._application = owner       
         #reset Game
         self.resetGame()
         
-    #functions (not exhaustive)
+    #functions
     def resetGame(self):
+        #initialize monster library
+        self._monsterLibrary = MonsterLibrary()
+
         #clear existing levels
         self._levels = []
-        #generate new level 
-        myLevel = GeneratedLevel(self,1)
-        self._levels.append(myLevel)
+        #generate new levels
+        previousLevel = None
+        for i in range(0,10):
+            if i > 0: previousLevel = self.levels[i-1]
+            currentLevel = GeneratedLevel(self,i+1) #difficulty > 0
+            self._levels.append(currentLevel)
+            if previousLevel != None:
+                #add portal in previous level to current level
+                downPortal = Portal(currentLevel)
+                downPortal._char = '>'
+                downPortal._name = 'The way down'
+                previousLevel.addPortal(downPortal)
+                #add portal in current level to previous level
+                upPortal = Portal(previousLevel)
+                upPortal._char = '<'
+                upPortal._name = 'The way up'
+                currentLevel.addPortal(upPortal)
+        
+        #Create player object
+        player = Player()
+        firstLevel = self.levels[0]
+        player.moveTo(firstLevel.map.entryTile)
+        
+        return
+
+    #TODO medium: implement saving and loading of gamestate
+    def loadGame(self, fileName):
         return
     
-    def loadGame(self):
-        return
-    
-    def saveGame(self):
+    def saveGame(self, fileName):
         return
  
+    def nextLevel(self):
+        """
+        Moves the game to the next level
+        """
+        if self._currentLevel < len(self.levels) - 1:
+            self._currentLevel += 1
+    
+    def previousLevel(self):
+        """
+        Moves the game to the previous level
+        """
+        if self._currentLevel > 0:
+            self._currentLevel -= 1        
+            
 ##########
 # LEVELS #
 ##########
@@ -160,8 +198,16 @@ class Level(object):
         The map of this level
         """
         return self._map
-    
-    _characters = []
+
+    _portals = None
+    @property
+    def portals(self):
+        """
+        The portals on this level
+        """
+        return self._portals
+            
+    _characters = None
     @property
     def characters(self):
         """
@@ -169,7 +215,7 @@ class Level(object):
         """
         return self._characters
     
-    _items = []
+    _items = None
     @property
     def items(self):
         """
@@ -185,11 +231,12 @@ class Level(object):
             owner - Game object that owns this level
             difficulty - Difficulty of this level
         """
+        #initialize class variables (makes them unique to this instance)
         self._game = owner
         self._difficulty = difficulty
-        
-    #functions
-        
+        self._portals = []
+        self._characters = []
+        self._items = []
         
 class GeneratedLevel(Level):
     """
@@ -198,12 +245,14 @@ class GeneratedLevel(Level):
     We may have different flavors (algorithms of these
     """
     #constructor
-    def __init__(self, owner, difficulty):
+    def __init__(self, owner, difficulty, previousLevel=None):
         """
         Constructor to create a new generated level.
         Arguments
             owner - Game object that owns this level
             difficulty - Difficulty of this level
+            previousLevel (optional) - Level that comes before this one
+            nextLevel (optional) - Level that comes after this one
         """
         #call constructor of super class
         super(GeneratedLevel,self).__init__(owner, difficulty)
@@ -212,6 +261,17 @@ class GeneratedLevel(Level):
         #add some monsters
         self.placeMonsters()
     
+    def addPortal(self, portal):
+        emptyTile = None
+        while emptyTile == None:
+            #pick a random room
+            aRoom = random.choice(self.map.rooms)
+            #find an empty tile in the room
+            emptyTile = aRoom.getRandomEmptyTile()
+        #place the portal on the empty tile
+        portal.moveTo(emptyTile)
+        self.portals.append(portal)
+        
     def placeMonsters(self):
         """
         This function will place monsters on this level depending on the 
@@ -240,13 +300,14 @@ class GeneratedLevel(Level):
                     new_monster.moveTo(target_tile)
                     
                     self.characters.append(new_monster)
-        
+
 class TownLevel(Level):
     """
     Class representing a fixed town level
     Specalised class that uses a fixed map and fixed characters (for example 
     town vendors)
     """
+    #TODO
 
 
 #######
@@ -360,7 +421,7 @@ class Map():
             x = random.randrange(0, self.width - w - 1)
             y = random.randrange(0, self.height - h - 1)
             #create a new room
-            new_room = Room(x, y, w, h)
+            new_room = Room(self,x, y, w, h)
 
             #abort if room intersects with existing room
             for other_room in self.rooms:
@@ -374,14 +435,14 @@ class Map():
                     self.tiles[x][y].blocked = False
                     self.tiles[x][y].blockSight = False
  
-            (new_x, new_y) = new_room.center()
+            (new_x, new_y) = new_room.center
             
             #create corridor towards previous room
             if num_rooms > 0:
                 #all rooms after the first: connect to the previous room
  
                 #center coordinates of previous room
-                (prev_x, prev_y) = self.rooms[num_rooms-1].center()
+                (prev_x, prev_y) = self.rooms[num_rooms-1].center
  
                 #create a corridor
                 if random.randrange(0, 1) == 1:
@@ -396,6 +457,12 @@ class Map():
             #finally, append the new room to the list
             self._rooms.append(new_room)
             num_rooms += 1
+        
+        #Set entry and exit tiles
+        (entryX, entryY) = self.rooms[0].center
+        self._entryTile = self._tiles[entryX][entryY]
+        (exitX,exitY) = self.rooms[len(self.rooms)-1].center
+        self._exitTile = self._tiles[exitX][exitY]
             
     def _createHorizontalTunnel(self, x1, x2, y):
         #horizontal tunnel. min() and max() are used in case x1>x2
@@ -413,14 +480,16 @@ class Room():
     """
     Describes a rectangular room on the map
     """
-    #Frost: TODO: clean up properties and comments of this class
-    
-    def __init__(self, x, y, w, h):
+    #TODO EASY: clean up properties and provide comments for this class
+    #could use some additional properties as well maybe.
+    def __init__(self, map, x, y, w, h):
+        self._map = map
         self.x1 = x
         self.y1 = y
         self.x2 = x + w
         self.y2 = y + h
  
+    @property
     def center(self):
         center_x = (self.x1 + self.x2) / 2
         center_y = (self.y1 + self.y2) / 2
@@ -431,8 +500,18 @@ class Room():
         return (self.x1 <= other.x2 and self.x2 >= other.x1 and
                 self.y1 <= other.y2 and self.y2 >= other.y1)
 
-#classes could be added for corridors in case we want to place stuff in corridors?
-
+    def getRandomEmptyTile(self):
+        aTile = None
+        xRange = range(self.x1,self.x2 +1)
+        random.shuffle(xRange)
+        yRange = range(self.y1,self.y2 +1)
+        random.shuffle(yRange)
+        for x in xRange:
+            for y in yRange:
+                if not self._map.tiles[x][y].blocked and self._map.tiles[x][y].empty:
+                    aTile = self._map.tiles[x][y]
+        return aTile
+        
 class Tile():
     """
     represents a Tile on the map
@@ -497,23 +576,20 @@ class Tile():
     def blockSight(self, blocksLineOfSight):
         self._blockSight = blocksLineOfSight
     
-    _actor = None
+    _actors = []
     @property
-    def actor(self):
+    def actors(self):
         """
-        Returns actor on this tile (can be None).
+        Returns actors on this tile.
         """
-        return self._actor
-    @actor.setter
-    def actor(self, myActor):
-        self._actor = myActor
+        return self._actors
     
     @property
     def empty(self):
         """
         Returns a boolean indicating if this tile is empty
         """
-        if self._actor == None: return True
+        if len(self.actors) == 0: return True
         return False
                     
     def __init__(self, map, x, y):
@@ -525,10 +601,23 @@ class Tile():
             x - x coordinate of the tile on the map
             y - y coordinate of the tile on the map
         """
+        self._actors = []
         self._map = map
         self._x = x
         self._y = y
 
+    def addActor(self, myActor):
+        """
+        This function adds and actor to this tile
+        """
+        self._actors.append(myActor)
+    
+    def removeActor(self, myActor):
+        """
+        This function adds and actor to this tile
+        """
+        self._actors.remove(myActor)
+        
 ##########
 # ACTORS #
 ##########
@@ -537,6 +626,10 @@ class Actor(object):
     Base class for everything that can occur in the gameworld.
     Example sub classes: Items and Characters.
     """
+    #Frostlock: I'm not completely happy with the name Actor but haven't 
+    # found anything better yet :-)
+    # Also I added hitpoints on this level, every Actor can be destroyed, 
+    # including items and portals.
     
     #class variables
     _id = "ID not set"
@@ -554,32 +647,6 @@ class Actor(object):
         Name of this Actor
         """
         return self._name
-            
-    _baseMaxHitPoints = 0
-    @property
-    def maxHitPoints(self):
-        """
-        Maximum hitpoints of this Actor
-        """  
-        bonus = 0
-        #TODO
-        #return actual max_hp, by summing up the bonuses from all equipped items
-        #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
-        return self._baseMaxHitPoints + bonus
-
-    _currentHitPoints = 0
-    @property
-    def currentHitPoints(self):
-        """
-        The current amount of hitpoints
-        """
-        return self._currentHitPoints
-    @currentHitPoints.setter
-    def currentHitPoints(self, hitPoints):
-        if hitPoints > self.maxHitPoints:
-            self._currentHitPoints = self.maxHitPoints
-        else:
-            self._currentHitPoints = hitPoints
     
     _char = None
     @property
@@ -596,13 +663,46 @@ class Actor(object):
         Returns the Tile on which this Actor is located. Can be None.
         """
         return self._tile
+    
+    _baseMaxHitPoints = 0
+    @property
+    def maxHitPoints(self):
+        """
+        Maximum hitpoints of this Character (overrides Actor)
+        """  
+        bonus = 0
+        #TODO medium: 
+        #return actual max_hp, by summing up the bonuses from all equipped items
+        #bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+        return self._baseMaxHitPoints + bonus
+    
+    _currentHitPoints = 0
+    @property
+    def currentHitPoints(self):
+        """
+        The current amount of hitpoints
+        """
+        return self._currentHitPoints
+    @currentHitPoints.setter
+    def currentHitPoints(self, hitPoints):
+        if hitPoints > self.maxHitPoints:
+            self._currentHitPoints = self.maxHitPoints
+        else:
+            self._currentHitPoints = hitPoints
                 
     #Constructor
     def __init__(self):
         """
-        Creates a new basic Actor, normally not used
+        Creates a new basic Actor, normally not used directly but should
+        be called by subclasses.
         """
-        raise NotImplementedError( "Should not instatiate a base Actor object" )
+        #initialize class variables (makes them unique to this instance)
+        self._baseMaxHitPoints = 1
+        self._char = '?'
+        self._currentHitPoints = 1
+        self._id = 'not set'
+        self._name = 'Nameless'
+        self._tile = None
         
     #functions
     def __str__(self):
@@ -612,9 +712,31 @@ class Actor(object):
         """
         moves this actor to the targetTile
         """
+        if self.tile != None:
+            self.tile.removeActor(self)
         self._tile = targetTile
-        targetTile.actor = self
-                
+        targetTile.addActor(self)
+
+class Portal(Actor):
+    """
+    This class can be used to represent portals in and out of a level
+    """
+    
+    _destination = None
+    @property
+    def destination(self):
+        """
+        The level where this portal leads to
+        """
+        return self._destination
+                    
+    def __init__(self, destination):
+        """
+        Constructor to create a new portal
+        """
+        super(Portal,self).__init__()
+        self._destination = destination
+        
 ##############
 # CHARACTERS #
 ##############
@@ -671,7 +793,7 @@ class Character(Actor):
         """
         bonus = 0
         #TODO
-        #return actual power, by summing up the bonuses from all equipped items
+        #include power bonuses of equipped items
         #bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
         return self._basePower + bonus
  
@@ -683,51 +805,138 @@ class Character(Actor):
         """
         bonus = 0
         #TODO
-        #return actual defense, by summing up the bonuses from all equipped items
+        #include defense bonuses of equipped items
         #bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
-        return self.base_defense + bonus
+        return self._baseDefense + bonus
   
     #Constructor
-    #TODO
+    def __init__(self):
+        """
+        Creates a new character object, normally not used directly but called
+        by sub class constructors.
+        """
+        #call super class constructor
+        super(Character,self).__init__()
+        #initialize class variables
+        self._baseDefense = 0
+        self._basePower = 1
+        self._equipedItems = []
+        self._inventoryItems = []
+        self._xpValue = 0
     
     #Functions
     def attack(self, target):
+        """
+        Attack another Character
+        Arguments
+            target - the Character to be attacked
+        """
         #a simple formula for attack damage
-        damage = self.power - target.fighter.defense
+        damage = self.power - target.defense
  
         if damage > 0:
-            #make the target take some damage
-            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
-            target.fighter.take_damage(damage,self)
+            Utility.message(self.name.capitalize() + ' attacks ' 
+                    + target.name + ' for ' + str(damage) + ' Damage.')
+            target.takeDamage(damage,self)
         else:
-            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+            Utility.message(self.name.capitalize() + ' attacks ' 
+                    + target.name + ' but it has no effect!')
  
-    def take_damage(self, damage, attacker):
-        global killerrabbit_death, wearing_amulet
-        # are we immune from rabbits?
-        if attacker.owner.name == 'killerrabbit' and wearing_amulet:
-            message('The Amulet of the Flying Circus protects you!')
-            return
+    def takeDamage(self, amount, attacker):
+        """
+        function to take damage from an attacker
+        arguments
+           damage - the incoming damage
+           attacker - the attacking Actor
+        """
         #apply damage if possible
-        if damage > 0:
-            self.hp -= damage
+        if amount > 0:
+            self.currentHitPoints -= amount
+            Utility.message(self.name.capitalize() + ' looses ' 
+                    + str(amount) + ' hitpoints (current: ' 
+                    + str(self.currentHitPoints) + ').')
  
+            #TODO
             #check for death. if there's a death function, call it
-            if self.hp <= 0:
-                function = self.death_function
-                if function is not None:
-                    function(self.owner,attacker)
+            #if self.hp <= 0:
+             #   function = self.death_function
+              #  if function is not None:
+               #     function(self.owner,attacker)
  
-    def heal(self, amount):
-        #heal by the given amount, without going over the maximum
-        self.hp += amount
-        if self.hp > self.max_hp:
-            self.hp = self.max_hp
+    def takeHeal(self, amount, attacker):
+        """
+        function to heal a given amount of hitpoints
+        arguments
+           amount - the number of hitpoints to heal
+        """
+        #heal by the given amount
+        if amount > 0:
+            self.currentHitPoints += amount
+            Utility.message(self.name.capitalize() + ' gains ' 
+                    + str(amount) + ' hitpoints (current: ' 
+                    + str(self.currentHitPoints) + ').')
 
 class Player(Character):
     """
     Sub class representing a player
     """
+    #class variables
+    
+    _xp = 0
+    @property
+    def xp():
+        """
+        Returns the current xp of the player.
+        """
+    _level = 0
+    @property
+    def level():
+        """
+        Returns the current level of the player.
+        """
+        
+    #constructor
+    def __init__(self):
+        """
+        Creates and initializes new player object. Note that the object is not
+        linked to a game tile. It should be moved to the tile after creation.
+        """
+        #call super class constructor
+        super(Player,self).__init__()
+                
+        #initialize all variables
+        #Actor components
+        self._id = 'player'
+        self._char = '@'
+        self._baseMaxHitPoints = 100
+        self._currentHitPoints = 100
+        self._name = random.choice(('Joe','Wesley','Frost'))
+        #Character components    
+        self._baseDefense = 2
+        self._basePower = 2
+        self._xpValue = 0
+        #Player components
+        self._xp = 0
+        self._level = 1
+        
+        #TODO: missing logic here
+        #death_function=globals().get(monster_data['death_function'], None))
+        ##death_function=monster_data['death_function'])
+        #ai_class = globals().get(monster_data['ai_component'])
+        ##ai_component=monster_data['ai_component']
+        ## and this instanstiates it if not None
+        #ai_component = ai_class and ai_class() or None
+            
+    #functions
+    def gainXp(self,amount):
+        """
+        Increase xp of this player with the given amount
+        arguments
+            amount - integer
+        """
+        self._xp += amount
+        #TODO:
+        #Check for level up
 
 class NPC(Character):
     """
@@ -765,7 +974,9 @@ class Monster(Character):
         Creates a new uninitialized Monster object.
         Use MonsterLibrary.createMonster() to create an initialized Monster.
         """
-        pass
+        #call super class constructor 
+        #(ensure instance gets unique copies of class variables) 
+        super(Monster,self).__init__()
         
 #########
 # ITEMS #
@@ -819,6 +1030,7 @@ class Library(object):
         Arguments
             config - an initialised config parser
         """
+        #initialize class variables
         self._configParser = myConfigParser
         
 class MonsterLibrary(Library):
@@ -850,16 +1062,20 @@ class MonsterLibrary(Library):
         """
         Returns a list of all created Monster objects
         """
-        return self._regularMonsters.append(self._uniqueMonsters)
+        return self._uniqueMonsters.append(self._regularMonsters)
                 
-    def __init__(self,myConfigParser):
+    def __init__(self):
         """
         Constructor to create a new monster library
-        Arguments
-            config - an initialised config parser
         """
+        #initialize configParser
+        config = ConfigParser.ConfigParser()
+        config.read(CONSTANTS.MONSTER_CONFIG)
         #call super class constructor
-        super(MonsterLibrary,self).__init__(myConfigParser)
+        super(MonsterLibrary,self).__init__(config)
+        #initialize class variables
+        self._uniqueMonsters =[]
+        self._regularMonsters = []
     
     def createMonster(self,monster_key):
         """
@@ -873,11 +1089,11 @@ class MonsterLibrary(Library):
         # do not create multiple unique monsters
         if monster_data['unique'] == 'True':
             unique_ids = []
-            for unique_monster in self.uniques:
+            for unique_monster in self.uniqueMonsters:
                 unique_ids.append(unique_monster.id)
             if monster_key in unique_ids:
                 #This unique was already created, do nothing
-                return None
+                raise Utility.GameError('Unique monster' + monster_key + ' already exists.')            
         
         #create the monster based on monster_data
         newMonster = Monster()
@@ -922,13 +1138,19 @@ class MonsterLibrary(Library):
         return max_monsters
 
     def getRandomMonster(self, difficulty):
-        #TODO: read these chances at creation time of the library
+        #TODO: read these chances at creation time of the library, no
+        #sense in doing it again for every monster
+        
         #chance of each monster
         monster_chances = {}
         for monster_name in self.configParser.get('lists', 'monster list').split(', '):
             chance_table = json.loads(self.configParser.get(monster_name, 'chance'))
             monster_chances[monster_name] = Utility.from_dungeon_level(chance_table,difficulty)
 
+        #Avoid recreating unique monsters
+        for unique_monster in self.uniqueMonsters:
+            del monster_chances[unique_monster.id]
+                
         #create a random monster
         choice = Utility.random_choice(monster_chances)
         monster = self.createMonster(choice)
@@ -958,19 +1180,6 @@ class BasicMonsterAI(AI):
     """
     AI sub class that provides AI implementation for basic monsters.
     """
-     #AI for a basic monster.
-    def take_turn(self):
-        #a basic monster takes its turn. if you can see it, it can see you
-        monster = self.owner
-        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
- 
-            #move towards player if far away
-            if monster.distance_to(player) >= 2:
-                monster.move_towards(player.x, player.y)
- 
-            #close enough, attack! (if the player is still alive.)
-            elif player.fighter.hp > 0:
-                monster.fighter.attack(player)
 
 class ConfusedMonsterAI(AI):
     """
@@ -1006,15 +1215,5 @@ class MagicEffect(Effect):
     #current thinking is that this class can both represent targeted as area
     #of effect spells.
 
-
-#########################
-# Game log for messages #
-#########################
-#TODO
-
-    
-
 if __name__ == '__main__':
     print("There is not much sense in running this file.")
-    import test_application
-    test_application.launch()
