@@ -51,15 +51,32 @@ class Actor(object):
         Returns the Tile on which this Actor is located. Can be None.
         """
         return self._tile
+    @tile.setter
+    def tile(self, targetTile):
+        """
+        Moves this actor to the targetTile.
+        """
+        if self._tile is not None:
+            self._tile.removeActor(self)
+        self._tile = targetTile
+        targetTile.addActor(self)
+
 
     _level = None
-
     @property
     def level(self):
         """
         Returns level on which this Actor is located. Can be None.
         """
         return self._level
+    @level.setter
+    def level(self, targetLevel):
+        """
+        Moves this actor to the targetLevel
+        """
+        if self._level is not None:
+            self.level.removeActor(self)
+        self._level = targetLevel
 
     _baseMaxHitPoints = 0
     @property
@@ -106,18 +123,50 @@ class Actor(object):
     def __str__(self):
         return self._name + " " + super(Actor,self).__str__()
 
-    def moveTo(self, targetLevel, targetTile):
+    def moveToTile(self, targetTile):
         """
-        moves this actor to the targetTile
+        moves this actor to the targetTile on the current level
         """
-        if self.tile is not None:
-            self.tile.removeActor(self)
-        self._tile = targetTile
-        if self.level != None:
-            self.level.removeActor(self)
-        self._level = targetLevel
-        targetTile.addActor(self)
+        self.tile = targetTile
 
+    def moveToLevel(self, targetLevel, targetTile):
+        """
+        moves this actor to the targetTile on the targetLevel
+        """
+        self.moveToTile(targetTile)
+        self.level = targetLevel
+
+    def moveAlongVector(self, vx, vy):
+        """
+        moves this actor on the current map according to the specified vector
+        """
+        #only works if we are on a map
+        if self.tile is not None:
+            targetX = self.tile.x + vx
+            targetY = self.tile.y + vy
+            #avoid out of bounds
+            Utilities.clamp(targetX, 0, self.tile.map.width)
+            Utilities.clamp(targetY, 0, self.tile.map.height)
+            #move
+            self.moveToTile(self.level.map.tiles[targetX][targetY])
+
+    def moveTowards(self, targetActor):
+        """
+        Moves this actor towards the provided actor.
+        arguments
+            actor - the target Actor object
+        """
+        #vector towards the target
+        dx = targetActor.tile.x - self.tile.x
+        dy = targetActor.tile.y - self.tile.y
+        #distance towards the target
+        distance = Utilities.distanceBetween(self, targetActor)
+        #normalize it to length 1 (preserving direction), then round it and
+        #convert to integer so the movement is restricted to the map grid
+        dx = int(round(dx / distance))
+        dy = int(round(dy / distance))
+        #move along the vector
+        self.moveAlongVector(dx, dy)
 
 class Portal(Actor):
     """
