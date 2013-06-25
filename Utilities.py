@@ -67,12 +67,30 @@ def from_dungeon_level(table, dungeon_level):
     return 0
 
 
-def message(message):
-    #TODO medium: improve implementation to keep log of messages
-    #ideally would like several levels of messages (debug, detail, main)
-    #that we we can only show relevant message level during gameplay
-    print message
+def message(text, category=None):
+    """
+    Utility function to deal with in game messages.
+    arguments
+        text - String representing the message
+        category - String representing the category in which this message falls
+    """
+    #Not much implemented at the moment
+    if category is None:
+        #Default to console output
+        print text
+    elif category.upper() == "AI":
+        print "AI: " + text
+    else:
+        #Default to console output
+        print text
 
+def clamp(n, minn, maxn):
+    """
+    This function returns the number n limited to the range min-max.
+    It is meant to be used to keep coordinates withing the limites of the map.
+    """
+    #Hurray for readability ;-)
+    return max(min(maxn, n), minn)
 
 def distanceBetween(actor1, actor2):
     """

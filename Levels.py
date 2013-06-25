@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import CONSTANTS
+import Utilities
 from Maps import *
 
 
@@ -118,14 +119,22 @@ class GeneratedLevel(Level):
         self._placeMonsters()
 
     def addPortal(self, portal):
-        self._addActor(portal)
+        """
+        Add the given portal to a random location in this level.
+        """
+        self._moveToRandomTile(portal)
         self.portals.append(portal)
+        portal.level = self
 
     def addPlayer(self, player):
-        self._addActor(player)
+        """
+        Add the given player to a random location in this level.
+        """
+        self._moveToRandomTile(player)
         self.characters.append(player)
+        player.level = self
 
-    def _addActor(self, actor):
+    def _moveToRandomTile(self, actor):
         emptyTile = None
         while emptyTile is None:
             #pick a random room
@@ -133,7 +142,7 @@ class GeneratedLevel(Level):
             #find an empty tile in the room
             emptyTile = aRoom.getRandomEmptyTile()
         #place the actor on the empty tile
-        actor.moveTo(self, emptyTile)
+        actor.moveToTile(emptyTile)
 
     def _placeMonsters(self):
         """
@@ -160,7 +169,7 @@ class GeneratedLevel(Level):
 
                     # get a random monster
                     new_monster = lib.getRandomMonster(self.difficulty)
-                    new_monster.moveTo(self, target_tile)
+                    new_monster.moveToLevel(self, target_tile)
 
                     self.characters.append(new_monster)
 

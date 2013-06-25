@@ -4,6 +4,8 @@
 # AI #
 ######
 from Actors import *
+from Utilities import message
+import math
 
 class AI(object):
     """
@@ -35,13 +37,6 @@ class AI(object):
         raise Utilities.GameError("Class AI does not have implementation"
                 "for takeTurn(), please use one of the subclasss")
 
-
-class PlayerAI(AI):
-    """
-    AI sub class that provides player control over characters
-    """
-
-
 class BasicMonsterAI(AI):
     """
     AI sub class that provides AI implementation for basic monsters.
@@ -69,10 +64,11 @@ class BasicMonsterAI(AI):
         """
         Take one turn
         """
-        print self.character.name + ' at ' + str(self.character.tile) + ' takes turn.'
+        message(self.character.name + ' at ' + str(self.character.tile) +
+                ' takes turn.', "AI")
         #Only take action if we are in a level
         if self.character.level is None:
-            print "   Not in a level, can't take action."
+            message("   Not in a level, can't take action.", "AI")
             return
 
         #Only take action if we find the player
@@ -81,41 +77,36 @@ class BasicMonsterAI(AI):
                 if type(c) is Player:
                     self._player = c
             if self.player is None:
-                print "   No player found, staying put"
+                message("   No player found, staying put", "AI")
                 return
+
+        #Only take action if player is not dead.
+        if self.player.state == Character.DEAD:
+            message("   Player is dead, no action needed", "AI")
+            return
 
 
         #TODO medium: read this from the config file via monsterlibrary via
         #new class variable in Character class
         RoS = 8  # Range of Sight
-        RoA = 1  # Range of Attack
+        RoA = 2  # Range of Attack
         distance = Utilities.distanceBetween(self.character, self.player)
-        print '   Player ' + self.player.name + ' found at ' + \
-                str(self.player.tile) + ' distance: ' + str(distance)
+        #message('   Player ' + self.player.name + ' found at ' + \
+        #        str(self.player.tile) + ' distance: ' + str(distance), "AI")
 
         #Only take action if player is within range of sight
-        if distance > 8:
-            print "   Player out of range of sight"
+        if distance > RoS:
+            #message("   Player out of range of sight", "AI")
             return
         #Attack if player is within range of attack
-        elif distance <= RoA:
-            print "   Attacking player"
+        elif distance < RoA:
+            message("   Attacking player", "AI")
+            self.character.attack(self.player)
             return
         else:
-            print "   Moving towards player"
-
-           #move towards player if far away
-           # if monster.distance_to(player) >= 2:
-            #    monster.move_towards(player.x, player.y)
-
-            #close enough, attack! (if the player is still alive.)
-            #elif player.fighter.hp > 0:
-             #   monster.fighter.attack(player)
-
-
-        #other approach could be to leverage field of view
-        #monster = self.owner
-        #if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+            message("   Moving towards player", "AI")
+            self.character.moveTowards(self.player)
+            return
 
 
 class ConfusedMonsterAI(AI):
