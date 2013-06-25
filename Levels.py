@@ -124,6 +124,7 @@ class GeneratedLevel(Level):
         """
         self._moveToRandomTile(portal)
         self.portals.append(portal)
+        portal.level = self
 
     def addPlayer(self, player):
         """
@@ -131,6 +132,7 @@ class GeneratedLevel(Level):
         """
         self._moveToRandomTile(player)
         self.characters.append(player)
+        player.level = self
 
     def _moveToRandomTile(self, actor):
         emptyTile = None

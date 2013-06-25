@@ -37,13 +37,6 @@ class AI(object):
         raise Utilities.GameError("Class AI does not have implementation"
                 "for takeTurn(), please use one of the subclasss")
 
-
-class PlayerAI(AI):
-    """
-    AI sub class that provides player control over characters
-    """
-
-
 class BasicMonsterAI(AI):
     """
     AI sub class that provides AI implementation for basic monsters.
@@ -87,11 +80,16 @@ class BasicMonsterAI(AI):
                 message("   No player found, staying put", "AI")
                 return
 
+        #Only take action if player is not dead.
+        if self.player.state == Character.DEAD:
+            message("   Player is dead, no action needed", "AI")
+            return
+
 
         #TODO medium: read this from the config file via monsterlibrary via
         #new class variable in Character class
         RoS = 8  # Range of Sight
-        RoA = 1  # Range of Attack
+        RoA = 2  # Range of Attack
         distance = Utilities.distanceBetween(self.character, self.player)
         #message('   Player ' + self.player.name + ' found at ' + \
         #        str(self.player.tile) + ' distance: ' + str(distance), "AI")

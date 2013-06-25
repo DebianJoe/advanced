@@ -83,6 +83,24 @@ class Game():
         """
         return self._application
 
+    PLAYING = 0
+    FINISHED = 1
+    _state = PLAYING
+    @property
+    def state(self):
+        """
+        Returns the game state
+        """
+        return self._state
+
+    _player = None
+    @property
+    def player(self):
+        """
+        The player of the game
+        """
+        return self._player
+
     #Simple array to store Level objects
     _levels = []
 
@@ -120,6 +138,7 @@ class Game():
         """
         #Initialize class variables
         self._application = owner
+        self._player = None
         #reset Game
         self.resetGame()
 
@@ -151,10 +170,12 @@ class Game():
                 currentLevel.addPortal(upPortal)
 
         #Create player object
-        player = Player()
+        self._player = Player()
         firstLevel = self.levels[0]
-        firstLevel.addPlayer(player)
+        firstLevel.addPlayer(self.player)
 
+        #Set the game state
+        self._state = Game.PLAYING
         return
 
     #TODO medium: implement saving and loading of gamestate
@@ -182,8 +203,9 @@ class Game():
         """
         This function will handle one complete turn.
         """
-        for character in self.currentLevel.characters:
-            character.takeTurn()
+        for c in self.currentLevel.characters:
+            if c.state == Character.ACTIVE:
+                 c.takeTurn()
 
 if __name__ == '__main__':
     print("There is not much sense in running this file.")

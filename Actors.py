@@ -127,7 +127,8 @@ class Actor(object):
         """
         moves this actor to the targetTile on the current level
         """
-        self.tile = targetTile
+        if not targetTile.blocked:
+            self.tile = targetTile
 
     def moveToLevel(self, targetLevel, targetTile):
         """
@@ -228,6 +229,16 @@ class Character(Actor):
         """
         return self._inventoryItems.append(self._equipedItems)
 
+    ACTIVE = 0
+    DEAD = 1
+    _state = ACTIVE
+    @property
+    def state(self):
+        """
+        Returns this characters state
+        """
+        return self._state
+
     _xpValue = 0
     @property
     def xpValue(self):
@@ -283,6 +294,7 @@ class Character(Actor):
         self._inventoryItems = []
         self._xpValue = 0
         self._AI = None
+        self._state = Character.ACTIVE
 
     #Functions
     def attack(self, target):
@@ -315,13 +327,25 @@ class Character(Actor):
             Utilities.message(self.name.capitalize() + ' looses '
                     + str(amount) + ' hitpoints (current: '
                     + str(self.currentHitPoints) + ').')
+        #check for death
+        if self.currentHitPoints < 0:
+            self._killedBy(attacker)
 
-            #TODO
-            #check for death. if there's a death function, call it
-            #if self.hp <= 0:
-             #   function = self.death_function
-              #  if function is not None:
-               #     function(self.owner,attacker)
+    def _killedBy(self, attacker):
+        """
+        This function handles the death of this Character
+        """
+        Utilities.message(attacker.name + ' kills ' + self.name, "KILL")
+        #yield experience to the attacker
+        if type(attacker) is Player:
+            attacker.gainXp(self.xpValue)
+            Utilities.message(attacker.name + ' gains '
+                    + str(self.xpValue) + ' XP.', "XP")
+        #transform this character into a corpse and remove AI
+        self._char = '%'
+        self._AI = None
+        self._name = 'remains of ' + self.name
+        self._state = Character.DEAD
 
     def takeHeal(self, amount, attacker):
         """
@@ -342,8 +366,6 @@ class Character(Actor):
         """
         if self.AI is not None:
             self.AI.takeTurn()
-        else:
-            print 'No AI available for ' + str(self)
 
 class Player(Character):
     """
@@ -384,17 +406,10 @@ class Player(Character):
         self._baseDefense = 2
         self._basePower = 2
         self._xpValue = 0
+        self._AI = None
         #Player components
         self._xp = 0
         self._playerLevel = 1
-
-        #TODO: missing logic here
-        #death_function=globals().get(monster_data['death_function'], None))
-        ##death_function=monster_data['death_function'])
-        #ai_class = globals().get(monster_data['ai_component'])
-        ##ai_component=monster_data['ai_component']
-        ## and this instanstiates it if not None
-        #ai_component = ai_class and ai_class() or None
 
     #functions
     def gainXp(self,amount):
@@ -406,6 +421,30 @@ class Player(Character):
         self._xp += amount
         #TODO:
         #Check for level up
+
+    def moveOrAttack(self, dx, dy):
+        """
+        Player moves or attacks in direction (dx, dy)
+        """
+        #the coordinates the player is moving to/attacking
+        x = self.tile.x + dx
+        y = self.tile.y + dy
+        targetTile = self.level.map.tiles[x][y]
+
+        #try to find an attackable actor there
+        target = None
+        for a in targetTile.actors:
+            #only attack monsters
+            if type(a) is Monster:
+                #don't attack dead monsters
+                if a.state != Character.DEAD:
+                    target = a
+
+        #attack if target found, move otherwise
+        if target is not None:
+            self.attack(target)
+        else:
+            self.moveAlongVector(dx, dy)
 
 class NPC(Character):
     """

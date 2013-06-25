@@ -315,10 +315,11 @@ class ApplicationLibtcod():
             libtcod.console_flush()
 
             #handle keys and exit game if needed
+            #this allows the player to play his turn
             if self.handleKeys() == 'exit':
                 break
 
-            #Play a turn
+            #Let the game play a turn
             self.game.playTurn()
 
 
@@ -397,12 +398,12 @@ class ApplicationLibtcod():
         #Draw level characters
         for myActor in self.game.currentLevel.characters:
             libtcod.console_set_default_foreground(con, libtcod.green)
-            if type(myActor) == Player:
-                    libtcod.console_set_default_foreground(con, libtcod.white)
             libtcod.console_put_char(con, myActor.tile.x, myActor.tile.y, myActor.char, libtcod.BKGND_NONE)
 
-        #TODO medium: make sure player is visible
-        #idea: it is drawn above with the characters, just redraw on top?
+        #Redraw player character (makes sure it is on top)
+        myActor = self.game.player
+        libtcod.console_set_default_foreground(con, libtcod.white)
+        libtcod.console_put_char(con, myActor.tile.x, myActor.tile.y, myActor.char, libtcod.BKGND_NONE)
 
         #blit the contents of "con" to the root console
         libtcod.console_blit(con, 0, 0, CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, 0, 0, 0)
@@ -424,11 +425,32 @@ class ApplicationLibtcod():
             #go down
             print "> Going down"
             self.game.nextLevel()
+            return
         elif key_char == '<':
             #go up
             print "< Going up"
             self.game.previousLevel()
+            return
 
+        if self.game.state == Game.PLAYING:
+            player = self.game.player
+            #movement keys
+            if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+                player.moveOrAttack(0, -1)
+            elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+                player.moveOrAttack(0, 1)
+            elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+                player.moveOrAttack(-1, 0)
+            elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+                player.moveOrAttack(1, 0)
+            elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
+                player.moveOrAttack(-1, -1)
+            elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
+                player.moveOrAttack(1, -1)
+            elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
+                player.moveOrAttack(-1, 1)
+            elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
+                player.moveOrAttack(1, 1)
 
 #This is where it all starts!
 if __name__ == '__main__':
