@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import random
+import Utilities
 
 
 class Map():
@@ -192,6 +193,24 @@ class Map():
             self.tiles[x][y].blocked = False
             self.tiles[x][y].blockSight = False
 
+    def updateFieldOfView(self, x, y, view_range):
+        """
+        Update the map tiles with what is in view_range, marking
+        those as explored.
+        """
+        
+        for tx, ty in self.each_map_position:
+            tile = self.tiles[tx][ty]
+            dist = Utilities.distanceBetweenPoints(x, y, tx, ty)
+            visible = dist <= view_range
+            if visible:
+                tile.inView = True
+                tile.explored = True
+            else:
+                self.tiles[tx][ty].inView = False
+            # set all actors as in view too
+            for actor in tile.actors:
+                actor.visible = visible
 
 class Room():
     """
