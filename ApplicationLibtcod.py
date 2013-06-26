@@ -389,16 +389,17 @@ class ApplicationLibtcod():
             # draw any actors standing on this tile.
             # includes Monsters and Portals
             for myActor in tile.actors:
-                actor_color = libtcod.white
-                # NOTE if the Actor base stores it's own color there is no
-                # need for type checking.
-                if type(myActor) is Actors.Portal:
-                    actor_color = libtcod.purple
-                elif type(myActor) is Actors.Monster:
-                    actor_color = libtcod.green
-                libtcod.console_set_default_foreground(con, actor_color)
-                libtcod.console_put_char(
-                    con, tile.x, tile.y, myActor.char, libtcod.BKGND_NONE)
+                if myActor.visible:
+                    actor_color = libtcod.white
+                    # NOTE if the Actor base stores it's own color there is no
+                    # need for type checking.
+                    if type(myActor) is Actors.Portal:
+                        actor_color = libtcod.purple
+                    elif type(myActor) is Actors.Monster:
+                        actor_color = libtcod.green
+                    libtcod.console_set_default_foreground(con, actor_color)
+                    libtcod.console_put_char(
+                        con, tile.x, tile.y, myActor.char, libtcod.BKGND_NONE)
 
             #Redraw player character (makes sure it is on top)
             myActor = self.game.player
@@ -474,6 +475,8 @@ class ApplicationLibtcod():
                 player.moveOrAttack(-1, 1)
             elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
                 player.moveOrAttack(1, 1)
+            self.game.currentLevel.map.updateFieldOfView(
+                player.tile.x, player.tile.y, 4)
 
 #This is where it all starts!
 if __name__ == '__main__':
