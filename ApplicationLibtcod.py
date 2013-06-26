@@ -379,6 +379,14 @@ class ApplicationLibtcod():
         #Frostlock: Ideally I would like to add the fov capability in the
         #game logic where it can be used by this class
         #Note the example code in previous project!
+        #
+        #NOTE Wesley: 
+        #   I did this before in another project as handled by the Game.
+        #   After each move the Game does a look_around() and marks a monster 
+        #   or tile as seen == True and in_range == True (if in fov).
+        #   Then we just draw tiles where seen, and monsters where in_range.
+        #   I will try add this tonight, it is pure python and simple and good
+        #   for learning how these things work :)
 
         #Go over every cell of the MAP
         for y in range(CONSTANTS.MAP_HEIGHT):
