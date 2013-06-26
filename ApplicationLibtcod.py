@@ -9,6 +9,7 @@ import libtcodpy as libtcod
 # the Game module will chain load other modules
 from Game import Game
 from Game import Player
+import Actors
 from Game import MonsterLibrary
 import CONSTANTS
 
@@ -361,69 +362,74 @@ class ApplicationLibtcod():
         """
         This function renders the main screen
         """
-        currentMap = self.game.currentLevel.map.tiles
+
         con = self.mapConsole
         libtcod.console_clear(con)
-
-        #Go over every cell of the MAP
-        for y in range(CONSTANTS.MAP_HEIGHT):
-            for x in range(CONSTANTS.MAP_WIDTH):
-                if currentMap[x][y].blockSight:
-                    #it is a wall
-                    libtcod.console_set_char_background(con, x, y, COLOR_LIGHT_WALL, libtcod.BKGND_SET)
+        level = self.game.currentLevel
+        
+        # draw the map tiles
+        for tile in level.map.explored_tiles:
+            if tile.blocked:
+                # these are wall tiles
+                if tile.inView:
+                    # the player can see these
+                    bg_color = COLOR_LIGHT_WALL
                 else:
-                    #it is empty space
-                    libtcod.console_set_char_background(con, x, y, COLOR_LIGHT_GROUND, libtcod.BKGND_SET)
-
-        #TODO hard: Need to manage field of view. Design not clear.
-        #Frostlock: Ideally I would like to add the fov capability in the
-        #game logic where it can be used by this class
-        #Note the example code in previous project!
-      
-        #Joe: Explain, the Fov is treated as a secondary map
-        #The question is do we wish to deal with it the same way?
-        #Ideally, if rooms are set before map is drawn, you save the
-        #generation of colors until inside FOV range, where you change
-        #the colors of them to match your final scheme, and then turn
-        #them back to the "shadowed" colors once player has set an 
-        #"explored" option.
-
-        #
-        #NOTE Wesley: 
-        #   I did this before in another project as handled by the Game.
-        #   After each move the Game does a look_around() and marks a monster 
-        #   or tile as seen == True and in_range == True (if in fov).
-        #   Then we just draw tiles where seen, and monsters where in_range.
-        #   I will try add this tonight, it is pure python and simple and good
-        #   for learning how these things work :)
-
-        #Go over every cell of the MAP
-        for y in range(CONSTANTS.MAP_HEIGHT):
-            for x in range(CONSTANTS.MAP_WIDTH):
-                wall = currentMap[x][y].blockSight
-
-                if wall:
-                    libtcod.console_set_char_background(con, x, y, COLOR_LIGHT_WALL, libtcod.BKGND_SET)
+                    # these are out of sight
+                    bg_color = COLOR_DARK_WALL
+            else:
+                # and these are floor tiles...
+                if tile.inView:
+                    bg_color = COLOR_LIGHT_GROUND
                 else:
-                    libtcod.console_set_char_background(con, x, y, COLOR_LIGHT_GROUND, libtcod.BKGND_SET)
+                    bg_color = COLOR_DARK_GROUND
+            libtcod.console_set_char_background(
+                con, tile.x, tile.y, bg_color, libtcod.BKGND_SET)
 
-        #Draw entries and exits for the level
-        for myActor in self.game.currentLevel.portals:
-            libtcod.console_set_default_foreground(con, libtcod.purple)
-            libtcod.console_put_char(con, myActor.tile.x, myActor.tile.y, myActor.char, libtcod.BKGND_NONE)
+            # draw any actors standing on this tile.
+            # includes Monsters and Portals
+            for myActor in tile.actors:
+                actor_color = libtcod.white
+                # NOTE if the Actor base stores it's own color there is no
+                # need for type checking.
+                if type(myActor) is Actors.Portal:
+                    actor_color = libtcod.purple
+                elif type(myActor) is Actors.Monster:
+                    actor_color = libtcod.green
+                libtcod.console_set_default_foreground(con, actor_color)
+                libtcod.console_put_char(
+                    con, tile.x, tile.y, myActor.char, libtcod.BKGND_NONE)
 
-        #Draw level characters
-        for myActor in self.game.currentLevel.characters:
-            libtcod.console_set_default_foreground(con, libtcod.green)
-            libtcod.console_put_char(con, myActor.tile.x, myActor.tile.y, myActor.char, libtcod.BKGND_NONE)
-
-        #Redraw player character (makes sure it is on top)
-        myActor = self.game.player
-        libtcod.console_set_default_foreground(con, libtcod.white)
-        libtcod.console_put_char(con, myActor.tile.x, myActor.tile.y, myActor.char, libtcod.BKGND_NONE)
+            #Redraw player character (makes sure it is on top)
+            myActor = self.game.player
+            libtcod.console_set_default_foreground(con, libtcod.white)
+            libtcod.console_put_char(
+                con, myActor.tile.x, myActor.tile.y, 
+                myActor.char, libtcod.BKGND_NONE)
 
         #blit the contents of "con" to the root console
         libtcod.console_blit(con, 0, 0, CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, 0, 0, 0)
+
+        ##TODO hard: Need to manage field of view. Design not clear.
+        ##Frostlock: Ideally I would like to add the fov capability in the
+        ##game logic where it can be used by this class
+        ##Note the example code in previous project!
+      
+        ##Joe: Explain, the Fov is treated as a secondary map
+        ##The question is do we wish to deal with it the same way?
+        ##Ideally, if rooms are set before map is drawn, you save the
+        ##generation of colors until inside FOV range, where you change
+        ##the colors of them to match your final scheme, and then turn
+        ##them back to the "shadowed" colors once player has set an 
+        ##"explored" option.
+
+        ##NOTE Wesley: 
+        ##   I did this before in another project as handled by the Game.
+        ##   After each move the Game does a look_around() and marks a monster 
+        ##   or tile as seen == True and in_range == True (if in fov).
+        ##   Then we just draw tiles where seen, and monsters where in_range.
+        ##   I will try add this tonight, it is pure python and simple and good
+        ##   for learning how these things work :)
 
         #TODO medium: create a GUI panel
         #Frostlock: this needs some game message log first in the game logic
