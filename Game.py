@@ -191,6 +191,7 @@ class Game():
         """
         if self._currentLevel < len(self.levels) - 1:
             self._currentLevel += 1
+            self.currentLevel.addPlayer(self.player)
 
     def previousLevel(self):
         """
