@@ -46,6 +46,28 @@ class Map():
         else:
             return 0
 
+    @property
+    def each_map_position(self):
+        """
+        Returns a 2D list that can be used to iterate over each map tile
+        x/y position:
+
+            for x, y in each_map_position():
+                pass
+        """
+
+        return [(x, y) for x in range(self.width) for y in range(self.height)]
+
+    @property
+    def explored_tiles(self):
+        """
+        Returns a list of all tiles explored.
+        This includes tiles in and out of the visible range.
+        """
+        
+        # this flattens the 2D tiles list into one list, filtered out.
+        return [t for sublist in self.tiles for t in sublist if t.explored]
+
     #Every map has a Tile object which contains the entry point
     _entryTile = None
 
@@ -266,6 +288,7 @@ class Tile():
     def blocked(self, isBlocked):
         self._blocked = isBlocked
         #Blocked tiles also block line of sight
+        # NOTE: not neccesarily, this is how windows and fences are made :)
         if isBlocked is True:
             self._block_sight = True
 
@@ -281,6 +304,17 @@ class Tile():
     @blockSight.setter
     def blockSight(self, blocksLineOfSight):
         self._blockSight = blocksLineOfSight
+
+    _in_view = True
+
+    @property
+    def inView(self):
+        """
+        Returns if this tile is in the player field of vision.
+        This is set by the game engine during each turn.
+        """
+
+        return self._in_view
 
     _actors = []
 
