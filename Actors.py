@@ -104,6 +104,21 @@ class Actor(object):
         else:
             self._currentHitPoints = hitPoints
 
+    _inView = False
+
+    @property
+    def inView(self):
+        """
+        This actor is in view of the player.
+        """
+        
+        return self._inView
+
+    @inView.setter
+    def inView(self, visible):
+        
+        self._inView = visible
+
     #Constructor
     def __init__(self):
         """
