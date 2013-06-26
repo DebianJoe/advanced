@@ -476,7 +476,7 @@ class ApplicationLibtcod():
             elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
                 player.moveOrAttack(1, 1)
             self.game.currentLevel.map.updateFieldOfView(
-                player.tile.x, player.tile.y, 4)
+                player.tile.x, player.tile.y, CONSTANTS.TORCH_RADIUS)
 
 #This is where it all starts!
 if __name__ == '__main__':
