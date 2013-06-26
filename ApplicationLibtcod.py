@@ -380,7 +380,7 @@ class ApplicationLibtcod():
         #game logic where it can be used by this class
         #Note the example code in previous project!
       
-        #TODO Explain, the Fov is treated as a secondary map
+        #Joe: Explain, the Fov is treated as a secondary map
         #The question is do we wish to deal with it the same way?
         #Ideally, if rooms are set before map is drawn, you save the
         #generation of colors until inside FOV range, where you change
