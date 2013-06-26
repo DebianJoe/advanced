@@ -102,6 +102,7 @@ class Map():
             for y in range(MapHeight)]
             for x in range(MapWidth)]
         self.generateMap()
+        self.refreshBlockedTileMatrix()
 
     #functions
     def generateMap(self):
@@ -193,6 +194,19 @@ class Map():
             self.tiles[x][y].blocked = False
             self.tiles[x][y].blockSight = False
 
+    def refreshBlockedTileMatrix(self):
+        """
+        Refresh a 2D matrix of 1's and 0'1 that indicate if a Tile position
+        blocks line of sight.
+        
+        We could have looped over each tile and check this
+        for each player movement, but this way is neater and more efficient.
+        """
+        
+        self.solidTileMatrix = Utilities.make_matrix(self.width, self.height, 0)
+        for x, y in self.each_map_position:
+            self.solidTileMatrix[x][y] = self.tiles[x][y].blockSight
+
     def updateFieldOfView(self, x, y, view_range):
         """
         Update the map tiles with what is in view_range, marking
@@ -203,14 +217,16 @@ class Map():
             tile = self.tiles[tx][ty]
             dist = Utilities.distanceBetweenPoints(x, y, tx, ty)
             visible = dist <= view_range
-            if visible:
+            line_of_sight = Utilities.line_of_sight(
+                self.solidTileMatrix, x, y, tx, ty)
+            if visible and line_of_sight:
                 tile.inView = True
                 tile.explored = True
             else:
                 self.tiles[tx][ty].inView = False
             # set all actors as in view too
             for actor in tile.actors:
-                actor.visible = visible
+                actor.visible = visible and line_of_sight
 
 class Room():
     """
