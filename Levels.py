@@ -130,6 +130,8 @@ class GeneratedLevel(Level):
         """
         Add the given player to a random location in this level.
         """
+        #NOTE if this level was visited before (_visited?) we can place
+        #   player on the down starecase tile instead of a random one.
         self._moveToRandomTile(player)
         self.characters.append(player)
         player.level = self
