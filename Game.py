@@ -199,6 +199,7 @@ class Game():
         """
         if self._currentLevel > 0:
             self._currentLevel -= 1
+            self.currentLevel.addPlayer(self.player)
 
     def playTurn(self):
         """
