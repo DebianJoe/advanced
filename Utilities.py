@@ -103,6 +103,15 @@ def distanceBetween(actor1, actor2):
     dy = actor1.tile.y - actor2.tile.y
     return math.sqrt(dx ** 2 + dy ** 2)
 
+def distanceBetweenPoints(x, y, u, v):
+    """
+    Return the distance between two points (x, y) and (u, v).
+    """
+
+    dx = x - u
+    dy = y - v
+    return math.sqrt(dx ** 2 + dy ** 2)
+
 
 class GameError(Exception):
     """
