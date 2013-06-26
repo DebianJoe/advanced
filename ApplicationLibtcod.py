@@ -379,6 +379,14 @@ class ApplicationLibtcod():
         #Frostlock: Ideally I would like to add the fov capability in the
         #game logic where it can be used by this class
         #Note the example code in previous project!
+      
+        #TODO Explain, the Fov is treated as a secondary map
+        #The question is do we wish to deal with it the same way?
+        #Ideally, if rooms are set before map is drawn, you save the
+        #generation of colors until inside FOV range, where you change
+        #the colors of them to match your final scheme, and then turn
+        #them back to the "shadowed" colors once player has set an 
+        #"explored" option.
 
         #Go over every cell of the MAP
         for y in range(CONSTANTS.MAP_HEIGHT):
