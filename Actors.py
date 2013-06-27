@@ -77,6 +77,7 @@ class Actor(object):
         if self._level is not None:
             self.level.removeActor(self)
         self._level = targetLevel
+        self.registerWithLevel(targetLevel)
 
     _baseMaxHitPoints = 0
     @property
@@ -122,6 +123,21 @@ class Actor(object):
     #functions
     def __str__(self):
         return self._name + " " + super(Actor,self).__str__()
+
+    def registerWithLevel(self, level):
+        """
+        This function registers this actor with the provided level.
+        It has to be overridden in the Actor subclasses to ensure that the
+        actor correctly registers with the level.
+        """
+        raise Utilities.GameError('Missing implementation for registerWithLevel()')
+
+    def moveToRandomTile(self):
+        """
+        moves this actor to a random tile on the current level
+        """
+        if self.level is not None:
+            self.moveToTile(self.level.getRandomEmptyTile)
 
     def moveToTile(self, targetTile):
         """
@@ -176,18 +192,30 @@ class Portal(Actor):
 
     _destination = None
     @property
-    def destination(self):
+    def destinationPortal(self):
         """
-        The level where this portal leads to
+        The destination portal where this portal leads to
         """
         return self._destination
 
-    def __init__(self, destination):
+    def __init__(self):
         """
         Constructor to create a new portal
         """
         super(Portal,self).__init__()
-        self._destination = destination
+
+    def connectTo(self, otherPortal):
+        """
+        Connects this portal to another portal
+        """
+        self._destination = otherPortal
+        otherPortal._destination = self
+
+    def registerWithLevel(self, level):
+        """
+        Makes the level aware that this portal is on it.
+        """
+        level.addPortal(self)
 
 ##############
 # CHARACTERS #
@@ -297,6 +325,12 @@ class Character(Actor):
         self._state = Character.ACTIVE
 
     #Functions
+    def registerWithLevel(self, level):
+        """
+        Makes the level aware that this character is on it.
+        """
+        level.addCharacter(self)
+
     def attack(self, target):
         """
         Attack another Character
@@ -404,7 +438,7 @@ class Player(Character):
         self._name = random.choice(('Joe','Wesley','Frost'))
         #Character components
         self._baseDefense = 2
-        self._basePower = 2
+        self._basePower = 6
         self._xpValue = 0
         self._AI = None
         #Player components
@@ -422,9 +456,22 @@ class Player(Character):
         #TODO:
         #Check for level up
 
-    def moveOrAttack(self, dx, dy):
+    def followPortal(self, portal):
         """
-        Player moves or attacks in direction (dx, dy)
+        Send player through specified portal.
+        """
+        #Move the player to the destination
+        destinationLevel = portal.destinationPortal.level
+        destinationTile = portal.destinationPortal.tile
+        self.moveToLevel(destinationLevel, destinationTile)
+        #change the current level of the game to the destinationlevel
+        myGame = destinationLevel.game
+        myGame.currentLevel = destinationLevel
+
+    def tryMoveOrAttack(self, dx, dy):
+        """
+        Player tries to move or attack in direction (dx, dy).
+        This function is meant to be called from the GUI.
         """
         #the coordinates the player is moving to/attacking
         x = self.tile.x + dx
@@ -445,6 +492,29 @@ class Player(Character):
             self.attack(target)
         else:
             self.moveAlongVector(dx, dy)
+
+    def tryFollowPortalUp(self):
+        """
+        Player attempts to follow a portal up at the current location.
+        This function is meant to be called from the GUI.
+        """
+        #check if there is a portal up on the current tile
+        for a in self.tile.actors:
+            if type(a) is Portal and a.char == '<':
+                self.followPortal(a)
+                break
+
+    def tryFollowPortalDown(self):
+        """
+        Player attempts to follow a portal down at the current location.
+        This function is meant to be called from the GUI.
+        """
+        #check if there is a portal up on the current tile
+        for a in self.tile.actors:
+            if type(a) is Portal and a.char == '>':
+                self.followPortal(a)
+                break
+
 
 class NPC(Character):
     """
@@ -495,6 +565,12 @@ class Item(Actor):
     Should probably not be instatiated but describes the general interface of
     an item
     """
+
+    def registerWithLevel(self, level):
+        """
+        Makes the level aware that this item is on it.
+        """
+        level.addItem(self)
 
 
 class Equipment(Item):

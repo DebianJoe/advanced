@@ -349,7 +349,7 @@ class ApplicationLibtcod():
     # GameScreen functions
     ##########################################################################
     def newGame(self):
-        self.game.resetGame()
+        self._game = Game(self)
 
     def loadGame(self, fileName):
         self.game.loadGame(fileName)
@@ -379,19 +379,19 @@ class ApplicationLibtcod():
         #Frostlock: Ideally I would like to add the fov capability in the
         #game logic where it can be used by this class
         #Note the example code in previous project!
-      
+
         #Joe: Explain, the Fov is treated as a secondary map
         #The question is do we wish to deal with it the same way?
         #Ideally, if rooms are set before map is drawn, you save the
         #generation of colors until inside FOV range, where you change
         #the colors of them to match your final scheme, and then turn
-        #them back to the "shadowed" colors once player has set an 
+        #them back to the "shadowed" colors once player has set an
         #"explored" option.
 
         #
-        #NOTE Wesley: 
+        #NOTE Wesley:
         #   I did this before in another project as handled by the Game.
-        #   After each move the Game does a look_around() and marks a monster 
+        #   After each move the Game does a look_around() and marks a monster
         #   or tile as seen == True and in_range == True (if in fov).
         #   Then we just draw tiles where seen, and monsters where in_range.
         #   I will try add this tonight, it is pure python and simple and good
@@ -438,36 +438,41 @@ class ApplicationLibtcod():
 
         if key.vk == libtcod.KEY_ESCAPE:
             return 'exit'
-        elif key_char == '>':
-            #go down
-            print "> Going down"
-            self.game.nextLevel()
-            return
-        elif key_char == '<':
-            #go up
-            print "< Going up"
-            self.game.previousLevel()
-            return
+        #elif key_char == '>':
+            ##go down
+            #print "> Going down"
+            #self.game.nextLevel()
+            #return
+        #elif key_char == '<':
+            ##go up
+            #print "< Going up"
+            #self.game.previousLevel()
+            #return
 
         if self.game.state == Game.PLAYING:
             player = self.game.player
             #movement keys
             if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
-                player.moveOrAttack(0, -1)
+                player.tryMoveOrAttack(0, -1)
             elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
-                player.moveOrAttack(0, 1)
+                player.tryMoveOrAttack(0, 1)
             elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
-                player.moveOrAttack(-1, 0)
+                player.tryMoveOrAttack(-1, 0)
             elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
-                player.moveOrAttack(1, 0)
+                player.tryMoveOrAttack(1, 0)
             elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
-                player.moveOrAttack(-1, -1)
+                player.tryMoveOrAttack(-1, -1)
             elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
-                player.moveOrAttack(1, -1)
+                player.tryMoveOrAttack(1, -1)
             elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
-                player.moveOrAttack(-1, 1)
+                player.tryMoveOrAttack(-1, 1)
             elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
-                player.moveOrAttack(1, 1)
+                player.tryMoveOrAttack(1, 1)
+            #portal keys
+            elif key_char == '>':
+                player.tryFollowPortalDown()
+            elif key_char == '<':
+                player.tryFollowPortalUp()
 
 #This is where it all starts!
 if __name__ == '__main__':
