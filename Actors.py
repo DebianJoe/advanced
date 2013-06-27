@@ -77,6 +77,7 @@ class Actor(object):
         if self._level is not None:
             self.level.removeActor(self)
         self._level = targetLevel
+        self.registerWithLevel(targetLevel)
 
     _baseMaxHitPoints = 0
     @property
@@ -122,6 +123,21 @@ class Actor(object):
     #functions
     def __str__(self):
         return self._name + " " + super(Actor,self).__str__()
+
+    def registerWithLevel(self, level):
+        """
+        This function registers this actor with the provided level.
+        It has to be overridden in the Actor subclasses to ensure that the
+        actor correctly registers with the level.
+        """
+        raise Utilities.GameError('Missing implementation for registerWithLevel()')
+
+    def moveToRandomTile(self):
+        """
+        moves this actor to a random tile on the current level
+        """
+        if self.level is not None:
+            self.moveToTile(self.level.getRandomEmptyTile)
 
     def moveToTile(self, targetTile):
         """
@@ -194,6 +210,12 @@ class Portal(Actor):
         """
         self._destination = otherPortal
         otherPortal._destination = self
+
+    def registerWithLevel(self, level):
+        """
+        Makes the level aware that this portal is on it.
+        """
+        level.addPortal(self)
 
 ##############
 # CHARACTERS #
@@ -303,6 +325,12 @@ class Character(Actor):
         self._state = Character.ACTIVE
 
     #Functions
+    def registerWithLevel(self, level):
+        """
+        Makes the level aware that this character is on it.
+        """
+        level.addCharacter(self)
+
     def attack(self, target):
         """
         Attack another Character
@@ -410,7 +438,7 @@ class Player(Character):
         self._name = random.choice(('Joe','Wesley','Frost'))
         #Character components
         self._baseDefense = 2
-        self._basePower = 2
+        self._basePower = 6
         self._xpValue = 0
         self._AI = None
         #Player components
@@ -537,6 +565,12 @@ class Item(Actor):
     Should probably not be instatiated but describes the general interface of
     an item
     """
+
+    def registerWithLevel(self, level):
+        """
+        Makes the level aware that this item is on it.
+        """
+        level.addItem(self)
 
 
 class Equipment(Item):

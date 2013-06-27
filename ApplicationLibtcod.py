@@ -349,7 +349,7 @@ class ApplicationLibtcod():
     # GameScreen functions
     ##########################################################################
     def newGame(self):
-        self.game.resetGame()
+        self._game = Game(self)
 
     def loadGame(self, fileName):
         self.game.loadGame(fileName)
