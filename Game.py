@@ -86,6 +86,7 @@ class Game():
     PLAYING = 0
     FINISHED = 1
     _state = PLAYING
+
     @property
     def state(self):
         """
@@ -94,6 +95,7 @@ class Game():
         return self._state
 
     _player = None
+
     @property
     def player(self):
         """
@@ -119,6 +121,13 @@ class Game():
         Returns the current level
         """
         return self.levels[self._currentLevel]
+
+    @currentLevel.setter
+    def currentLevel(self, level):
+        """
+        Sets the current level
+        """
+        self._currentLevel = self.levels.indexOf(level)
 
     _monsterLibrary = None
 
@@ -159,15 +168,17 @@ class Game():
             self._levels.append(currentLevel)
             if previousLevel is not None:
                 #add portal in previous level to current level
-                downPortal = Portal(currentLevel)
+                downPortal = Portal()
                 downPortal._char = '>'
                 downPortal._name = 'The way down'
                 previousLevel.addPortal(downPortal)
                 #add portal in current level to previous level
-                upPortal = Portal(previousLevel)
+                upPortal = Portal()
                 upPortal._char = '<'
                 upPortal._name = 'The way up'
                 currentLevel.addPortal(upPortal)
+                #connect the two portals
+                downPortal.connectTo(upPortal)
 
         #Create player object
         self._player = Player()
@@ -207,7 +218,7 @@ class Game():
         """
         for c in self.currentLevel.characters:
             if c.state == Character.ACTIVE:
-                 c.takeTurn()
+                c.takeTurn()
 
 if __name__ == '__main__':
     print("There is not much sense in running this file.")

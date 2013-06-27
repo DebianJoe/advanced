@@ -176,18 +176,24 @@ class Portal(Actor):
 
     _destination = None
     @property
-    def destination(self):
+    def destinationPortal(self):
         """
-        The level where this portal leads to
+        The destination portal where this portal leads to
         """
         return self._destination
 
-    def __init__(self, destination):
+    def __init__(self):
         """
         Constructor to create a new portal
         """
         super(Portal,self).__init__()
-        self._destination = destination
+
+    def connectTo(self, otherPortal):
+        """
+        Connects this portal to another portal
+        """
+        self._destination = otherPortal
+        otherPortal._destination = self
 
 ##############
 # CHARACTERS #
@@ -422,9 +428,22 @@ class Player(Character):
         #TODO:
         #Check for level up
 
-    def moveOrAttack(self, dx, dy):
+    def followPortal(self, portal):
         """
-        Player moves or attacks in direction (dx, dy)
+        Send player through specified portal.
+        """
+        #Move the player to the destination
+        destinationLevel = portal.destinationPortal.level
+        destinationTile = portal.destinationPortal.tile
+        self.moveToLevel(destinationLevel, destinationTile)
+        #change the current level of the game to the destinationlevel
+        myGame = destinationLevel.game
+        myGame.currentLevel = destinationLevel
+
+    def tryMoveOrAttack(self, dx, dy):
+        """
+        Player tries to move or attack in direction (dx, dy).
+        This function is meant to be called from the GUI.
         """
         #the coordinates the player is moving to/attacking
         x = self.tile.x + dx
@@ -445,6 +464,29 @@ class Player(Character):
             self.attack(target)
         else:
             self.moveAlongVector(dx, dy)
+
+    def tryFollowPortalUp(self):
+        """
+        Player attempts to follow a portal up at the current location.
+        This function is meant to be called from the GUI.
+        """
+        #check if there is a portal up on the current tile
+        for a in self.tile.actors:
+            if type(a) is Portal and a.char == '<':
+                self.followPortal(a)
+                break
+
+    def tryFollowPortalDown(self):
+        """
+        Player attempts to follow a portal down at the current location.
+        This function is meant to be called from the GUI.
+        """
+        #check if there is a portal up on the current tile
+        for a in self.tile.actors:
+            if type(a) is Portal and a.char == '>':
+                self.followPortal(a)
+                break
+
 
 class NPC(Character):
     """
