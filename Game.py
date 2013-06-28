@@ -203,6 +203,7 @@ class Game():
         """
         if self._currentLevel > 0:
             self._currentLevel -= 1
+            self.currentLevel.addPlayer(self.player)
             self.currentLevel.map.updateFieldOfView(
                 self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
 
