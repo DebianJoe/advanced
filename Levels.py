@@ -22,6 +22,15 @@ class Level(object):
         """
         return self._game
 
+    _name = None
+
+    @property
+    def name(self):
+        """
+        The name of the level.
+        """
+        return self._name
+
     _difficulty = 0
 
     @property
@@ -68,16 +77,18 @@ class Level(object):
         return self._items
 
     #constructor
-    def __init__(self, owner, difficulty):
+    def __init__(self, owner, difficulty, name):
         """
         Constructor to create a new level.
         Arguments
             owner - Game object that owns this level
             difficulty - Difficulty of this level
+            name - a textual name for this level
         """
         #initialize class variables (makes them unique to this instance)
         self._game = owner
         self._difficulty = difficulty
+        self._name = name
         self._portals = []
         self._characters = []
         self._items = []
@@ -121,17 +132,16 @@ class GeneratedLevel(Level):
     We may have different flavors (algorithms of these
     """
     #constructor
-    def __init__(self, owner, difficulty, previousLevel=None):
+    def __init__(self, owner, difficulty, name):
         """
         Constructor to create a new generated level.
         Arguments
             owner - Game object that owns this level
             difficulty - Difficulty of this level
-            previousLevel (optional) - Level that comes before this one
-            nextLevel (optional) - Level that comes after this one
+            name - a textual name for this level
         """
         #call constructor of super class
-        super(GeneratedLevel, self).__init__(owner, difficulty)
+        super(GeneratedLevel, self).__init__(owner, difficulty, name)
         #generate the map
         self._map = Map(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         #add some monsters

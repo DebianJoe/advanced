@@ -4,6 +4,7 @@
 
 import random
 import Utilities
+import CONSTANTS
 
 ##########
 # ACTORS #
@@ -112,12 +113,12 @@ class Actor(object):
         """
         This actor is in view of the player.
         """
-        
+
         return self._inView
 
     @inView.setter
     def inView(self, visible):
-        
+
         self._inView = visible
 
     #Constructor
@@ -424,16 +425,26 @@ class Player(Character):
 
     _xp = 0
     @property
-    def xp():
+    def xp(self):
         """
         Returns the current xp of the player.
         """
-    _playerLevel = 0
+        return self._xp
+
+    @property
+    def nextLevelXp(self):
+        """
+        Returns the required Xp to reach the next player level
+        """
+        return CONSTANTS.LEVEL_UP_BASE + self.playerLevel * CONSTANTS.LEVEL_UP_FACTOR
+
+    _playerLevel = 1
     @property
     def playerLevel(self):
         """
         Returns the current level of the player.
         """
+        return self._playerLevel
 
     #constructor
     def __init__(self):

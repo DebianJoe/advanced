@@ -165,7 +165,7 @@ class Game():
         for i in range(0, 10):
             if i > 0:
                 prevLevel = self.levels[i - 1]
-            curLevel = GeneratedLevel(self, i + 1)  # difficulty > 0
+            curLevel = GeneratedLevel(self, i + 1, 'Dungeon lvl ' + str(i + 1 ))
             self._levels.append(curLevel)
             if prevLevel is not None:
                 #add portal in previous level to current level
