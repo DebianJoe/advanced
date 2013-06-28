@@ -350,7 +350,7 @@ class ApplicationLibtcod():
     # GameScreen functions
     ##########################################################################
     def newGame(self):
-        self.game.resetGame()
+        self._game = Game(self)
 
     def loadGame(self, fileName):
         self.game.loadGame(fileName)
@@ -445,36 +445,31 @@ class ApplicationLibtcod():
 
         if key.vk == libtcod.KEY_ESCAPE:
             return 'exit'
-        elif key_char == '>':
-            #go down
-            print "> Going down"
-            self.game.nextLevel()
-            return
-        elif key_char == '<':
-            #go up
-            print "< Going up"
-            self.game.previousLevel()
-            return
-
         if self.game.state == Game.PLAYING:
             player = self.game.player
             #movement keys
             if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
-                player.moveOrAttack(0, -1)
+                player.tryMoveOrAttack(0, -1)
             elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
-                player.moveOrAttack(0, 1)
+                player.tryMoveOrAttack(0, 1)
             elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
-                player.moveOrAttack(-1, 0)
+                player.tryMoveOrAttack(-1, 0)
             elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
-                player.moveOrAttack(1, 0)
+                player.tryMoveOrAttack(1, 0)
             elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
-                player.moveOrAttack(-1, -1)
+                player.tryMoveOrAttack(-1, -1)
             elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
-                player.moveOrAttack(1, -1)
+                player.tryMoveOrAttack(1, -1)
             elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
-                player.moveOrAttack(-1, 1)
+                player.tryMoveOrAttack(-1, 1)
             elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
-                player.moveOrAttack(1, 1)
+                player.tryMoveOrAttack(1, 1)
+            #portal keys
+            elif key_char == '>':
+                player.tryFollowPortalDown()
+            elif key_char == '<':
+                player.tryFollowPortalUp()
+            # update field of vision
             self.game.currentLevel.map.updateFieldOfView(
                 player.tile.x, player.tile.y, CONSTANTS.TORCH_RADIUS)
 

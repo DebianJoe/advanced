@@ -86,6 +86,7 @@ class Game():
     PLAYING = 0
     FINISHED = 1
     _state = PLAYING
+
     @property
     def state(self):
         """
@@ -94,6 +95,7 @@ class Game():
         return self._state
 
     _player = None
+
     @property
     def player(self):
         """
@@ -120,6 +122,13 @@ class Game():
         """
         return self.levels[self._currentLevel]
 
+    @currentLevel.setter
+    def currentLevel(self, level):
+        """
+        Sets the current level
+        """
+        self._currentLevel = self.levels.indexOf(level)
+
     _monsterLibrary = None
 
     @property
@@ -144,6 +153,7 @@ class Game():
 
     #functions
     def resetGame(self):
+        print "Reset game"
         #initialize monster library
         self._monsterLibrary = MonsterLibrary()
 
@@ -151,28 +161,30 @@ class Game():
         self._levels = []
         self._currentLevel = 0
         #generate new levels
-        previousLevel = None
+        prevLevel = None
         for i in range(0, 10):
             if i > 0:
-                previousLevel = self.levels[i - 1]
-            currentLevel = GeneratedLevel(self, i + 1)  # difficulty > 0
-            self._levels.append(currentLevel)
-            if previousLevel is not None:
+                prevLevel = self.levels[i - 1]
+            curLevel = GeneratedLevel(self, i + 1)  # difficulty > 0
+            self._levels.append(curLevel)
+            if prevLevel is not None:
                 #add portal in previous level to current level
-                downPortal = Portal(currentLevel)
+                downPortal = Portal()
                 downPortal._char = '>'
                 downPortal._name = 'The way down'
-                previousLevel.addPortal(downPortal)
+                downPortal.moveToLevel(prevLevel, prevLevel.getRandomEmptyTile())
                 #add portal in current level to previous level
-                upPortal = Portal(previousLevel)
+                upPortal = Portal()
                 upPortal._char = '<'
                 upPortal._name = 'The way up'
-                currentLevel.addPortal(upPortal)
+                upPortal.moveToLevel(curLevel, curLevel.getRandomEmptyTile())
+                #connect the two portals
+                downPortal.connectTo(upPortal)
 
         #Create player object
         self._player = Player()
         firstLevel = self.levels[0]
-        firstLevel.addPlayer(self.player)
+        self.player.moveToLevel(firstLevel, firstLevel.getRandomEmptyTile())
         firstLevel.map.updateFieldOfView(
             self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
 
@@ -211,9 +223,10 @@ class Game():
         """
         This function will handle one complete turn.
         """
+        print "running turn for level " + str(self.currentLevel)
         for c in self.currentLevel.characters:
             if c.state == Character.ACTIVE:
-                 c.takeTurn()
+                c.takeTurn()
 
 if __name__ == '__main__':
     print("There is not much sense in running this file.")

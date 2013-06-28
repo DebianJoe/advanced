@@ -95,6 +95,25 @@ class Level(object):
             if i is myActor:
                 self.items.remove(i)
 
+    def addPortal(self, portal):
+        """
+        Register the given portal to this level.
+        """
+        self.portals.append(portal)
+
+    def addCharacter(self, character):
+        """
+        Register the given character to this level.
+        """
+        self.characters.append(character)
+
+    def addItem(self, item):
+        """
+        Register the given item to this level.
+        """
+        self.items.append(item)
+
+
 class GeneratedLevel(Level):
     """
     Class representing a randomly generated level
@@ -118,33 +137,14 @@ class GeneratedLevel(Level):
         #add some monsters
         self._placeMonsters()
 
-    def addPortal(self, portal):
-        """
-        Add the given portal to a random location in this level.
-        """
-        self._moveToRandomTile(portal)
-        self.portals.append(portal)
-        portal.level = self
-
-    def addPlayer(self, player):
-        """
-        Add the given player to a random location in this level.
-        """
-        #NOTE if this level was visited before (_visited?) we can place
-        #   player on the down starecase tile instead of a random one.
-        self._moveToRandomTile(player)
-        self.characters.append(player)
-        player.level = self
-
-    def _moveToRandomTile(self, actor):
+    def getRandomEmptyTile(self):
         emptyTile = None
         while emptyTile is None:
             #pick a random room
             aRoom = random.choice(self.map.rooms)
             #find an empty tile in the room
             emptyTile = aRoom.getRandomEmptyTile()
-        #place the actor on the empty tile
-        actor.moveToTile(emptyTile)
+        return emptyTile
 
     def _placeMonsters(self):
         """
@@ -173,7 +173,7 @@ class GeneratedLevel(Level):
                     new_monster = lib.getRandomMonster(self.difficulty)
                     new_monster.moveToLevel(self, target_tile)
 
-                    self.characters.append(new_monster)
+                    self.addCharacter(new_monster)
 
 
 class TownLevel(Level):
