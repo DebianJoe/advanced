@@ -7,6 +7,7 @@ from Actors import *
 from Utilities import message
 import math
 
+
 class AI(object):
     """
     Base class for AI logic
@@ -37,12 +38,14 @@ class AI(object):
         raise Utilities.GameError("Class AI does not have implementation"
                 "for takeTurn(), please use one of the subclasss")
 
+
 class BasicMonsterAI(AI):
     """
     AI sub class that provides AI implementation for basic monsters.
     """
 
     _player = None
+
     @property
     def player(self):
         """
@@ -84,7 +87,6 @@ class BasicMonsterAI(AI):
         if self.player.state == Character.DEAD:
             message("   Player is dead, no action needed", "AI")
             return
-
 
         #TODO medium: read this from the config file via monsterlibrary via
         #new class variable in Character class

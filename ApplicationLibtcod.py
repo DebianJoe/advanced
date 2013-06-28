@@ -89,7 +89,7 @@ class ApplicationLibtcod():
             if len(self.messages) == MSG_HEIGHT:
                 del self.messages[0]
             #add the new line
-            self.messages.append(line)  #  (line, color) )
+            self.messages.append(line)  # (line, color) )
 
     def __init__(self):
         """
@@ -354,8 +354,6 @@ class ApplicationLibtcod():
             #Let the game play a turn
             self.game.playTurn()
 
-
-
         #Clean up (restore whatever was behind this window)
         libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
         libtcod.console_flush()
@@ -471,16 +469,18 @@ class ApplicationLibtcod():
             for line in self.messages:
                 libtcod.console_set_default_foreground(panel, libtcod.white)
                 libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE,
-                        libtcod.LEFT,line)
+                        libtcod.LEFT, line)
                 y += 1
 
         if player is not None:
             #Player health bar
-            self.renderBar(panel, 1, 1, BAR_WIDTH, 'HP', player.currentHitPoints,
-                    player.maxHitPoints, libtcod.dark_red, libtcod.darker_gray)
+            self.renderBar(panel, 1, 1, BAR_WIDTH, 'HP',
+                    player.currentHitPoints, player.maxHitPoints,
+                    libtcod.dark_red, libtcod.darker_gray)
             #Player xp bar
-            self.renderBar(panel, 1, 2, BAR_WIDTH, 'XP', player.xp,
-                    player.nextLevelXp, libtcod.darker_green, libtcod.darker_gray)
+            self.renderBar(panel, 1, 2, BAR_WIDTH, 'XP',
+                    player.xp, player.nextLevelXp,
+                    libtcod.darker_green, libtcod.darker_gray)
         if self.game.currentLevel is not None:
             #Dungeon level
             libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE,
@@ -491,12 +491,15 @@ class ApplicationLibtcod():
         # happening at the moment. Currently it pauses to wait for the player to
         # hit a key.
         #libtcod.console_set_default_foreground(panel, libtcod.light_gray)
-        #libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
+        #libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE,
+        #        libtcod.LEFT, get_names_under_mouse())
 
         #blit the contents of "panel" to the root console
-        libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
+        libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH,
+                PANEL_HEIGHT, 0, 0, PANEL_Y)
 
-    def renderBar(self, panel, x, y, total_width, name, value, maximum, bar_color, back_color):
+    def renderBar(self, panel, x, y, total_width,
+            name, value, maximum, bar_color, back_color):
         """
         Helper function to render interface bars
         """
@@ -514,8 +517,9 @@ class ApplicationLibtcod():
 
         #finally, some centered text with the values
         libtcod.console_set_default_foreground(panel, libtcod.white)
-        libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
-                                     name + ': ' + str(value) + '/' + str(maximum))
+        libtcod.console_print_ex(panel, x + total_width / 2, y,
+                libtcod.BKGND_NONE, libtcod.CENTER,
+                name + ': ' + str(value) + '/' + str(maximum))
 
     def handleKeys(self):
         key = libtcod.console_wait_for_keypress(True)

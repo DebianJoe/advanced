@@ -164,14 +164,14 @@ class Game():
         for i in range(0, 10):
             if i > 0:
                 prevLevel = self.levels[i - 1]
-            curLevel = GeneratedLevel(self, i + 1, 'Dungeon lvl ' + str(i + 1 ))
+            curLevel = GeneratedLevel(self, i + 1, 'Dungeon lvl ' + str(i + 1))
             self._levels.append(curLevel)
             if prevLevel is not None:
                 #add portal in previous level to current level
                 downPortal = Portal()
                 downPortal._char = '>'
                 downPortal._name = 'a set of stairs leading down into darkness'
-                downPortal.moveToLevel(prevLevel, prevLevel.getRandomEmptyTile())
+                downPortal.moveToLevel(prevLevel, prevLevel. getRandomEmptyTile())
                 #add portal in current level to previous level
                 upPortal = Portal()
                 upPortal._char = '<'

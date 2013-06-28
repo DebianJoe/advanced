@@ -65,7 +65,7 @@ class Map():
         Returns a list of all tiles explored.
         This includes tiles in and out of the visible range.
         """
-        
+
         # this flattens the 2D tiles list into one list, filtered out.
         return [t for sublist in self.tiles for t in sublist if t.explored]
 
@@ -198,11 +198,11 @@ class Map():
         """
         Refresh a 2D matrix of 1's and 0'1 that indicate if a Tile position
         blocks line of sight.
-        
+
         We could have looped over each tile and check this
         for each player movement, but this way is neater and more efficient.
         """
-        
+
         self.solidTileMatrix = Utilities.make_matrix(self.width, self.height, 0)
         for x, y in self.each_map_position:
             self.solidTileMatrix[x][y] = self.tiles[x][y].blockSight
@@ -212,7 +212,7 @@ class Map():
         Update the map tiles with what is in view_range, marking
         those as explored.
         """
-        
+
         for tx, ty in self.each_map_position:
             tile = self.tiles[tx][ty]
             dist = Utilities.distanceBetweenPoints(x, y, tx, ty)
@@ -227,6 +227,7 @@ class Map():
             # set all actors as in view too
             for actor in tile.actors:
                 actor.visible = visible and line_of_sight
+
 
 class Room():
     """
