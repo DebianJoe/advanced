@@ -6,7 +6,7 @@
 #TODO medium: this module should be made PEP8 compliant
 import random
 import math
-
+import CONSTANTS
 
 # rolling a hitdie
 def roll_hit_die(hitdie):
@@ -66,6 +66,15 @@ def from_dungeon_level(table, dungeon_level):
             return value
     return 0
 
+# This property is used by the message function to send game messages
+# to the application where they can be shown.
+_application = None
+@property
+def application():
+    return _application
+@application.setter
+def application(myApp):
+    _application = myApp
 
 def message(text, category=None):
     """
@@ -78,8 +87,14 @@ def message(text, category=None):
     if category is None:
         #Default to console output
         print text
+    elif category.upper() == "GAME":
+        if application is not None:
+            application.addMessage(text)
+        else:
+            print "GAME: " + text
     elif category.upper() == "AI":
-        print "AI: " + text
+        if CONSTANTS.SHOW_AI_LOGGING == True:
+            print "AI: " + text
     else:
         #Default to console output
         print text

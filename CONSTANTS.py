@@ -18,4 +18,7 @@ LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
 
 #config files
-MONSTER_CONFIG= "dungeons.conf"
+MONSTER_CONFIG = "dungeons.conf"
+
+#config switches
+SHOW_AI_LOGGING = False

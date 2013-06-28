@@ -12,6 +12,8 @@ from Game import Player
 import Actors
 from Game import MonsterLibrary
 import CONSTANTS
+import Utilities
+import textwrap
 
 #actual size of the window
 SCREEN_WIDTH = 85
@@ -22,6 +24,9 @@ LIMIT_FPS = 20  # 20 frames-per-second maximum
 PANEL_HEIGHT = 7
 BAR_WIDTH = 20
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
+MSG_X = BAR_WIDTH + 2
+MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
+MSG_HEIGHT = PANEL_HEIGHT - 1
 
 #libtcod colors
 COLOR_DARK_WALL = libtcod.light_orange * libtcod.dark_grey * 0.2
@@ -67,6 +72,25 @@ class ApplicationLibtcod():
         """
         return self._panelConsole
 
+    _messages = None
+
+    @property
+    def messages(self):
+        """
+        returns the most recent game messages
+        """
+        return self._messages
+
+    def addMessage(self, new_msg):  # , color = libtcod.white):
+        #split the message if necessary, among multiple lines
+        new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
+        for line in new_msg_lines:
+            #only keep the last messages
+            if len(self.messages) == MSG_HEIGHT:
+                del self.messages[0]
+            #add the new line
+            self.messages.append(line)  #  (line, color) )
+
     def __init__(self):
         """
         Constructor that creates a new instance of the application
@@ -82,8 +106,13 @@ class ApplicationLibtcod():
         self._mapConsole = libtcod.console_new(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         self._panelConsole = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 
+        #Prepare to receive messages from the game utilities
+        #(this allows the utilities to send game messages to this application)
+        self._messages = []
+        Utilities.application = self
+
         #Create a new game object for this application
-        self._game = Game(self)
+        #self._game = Game(self)
 
     ##########################################################################
     # show functions
@@ -437,11 +466,14 @@ class ApplicationLibtcod():
         libtcod.console_clear(panel)
 
         ##print the game messages, one line at a time
-        #y = 1
-        #for (line, color) in game_msgs:
-            #libtcod.console_set_default_foreground(panel, color)
-            #libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT,line)
-            #y += 1
+        if self.messages is not None:
+            y = 1
+            for line in self.messages:
+                libtcod.console_set_default_foreground(panel, libtcod.white)
+                libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE,
+                        libtcod.LEFT,line)
+                y += 1
+
         if player is not None:
             #Player health bar
             self.renderBar(panel, 1, 1, BAR_WIDTH, 'HP', player.currentHitPoints,
@@ -454,7 +486,10 @@ class ApplicationLibtcod():
             libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE,
                     libtcod.LEFT, str(self.game.currentLevel.name))
 
-        #display names of objects under the mouse
+        #TODO: display names of objects under the mouse
+        # Frost: this would require running this loop constantly which is not
+        # happening at the moment. Currently it pauses to wait for the player to
+        # hit a key.
         #libtcod.console_set_default_foreground(panel, libtcod.light_gray)
         #libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
 

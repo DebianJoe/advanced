@@ -153,7 +153,6 @@ class Game():
 
     #functions
     def resetGame(self):
-        print "Reset game"
         #initialize monster library
         self._monsterLibrary = MonsterLibrary()
 
@@ -171,12 +170,12 @@ class Game():
                 #add portal in previous level to current level
                 downPortal = Portal()
                 downPortal._char = '>'
-                downPortal._name = 'The way down'
+                downPortal._name = 'a set of stairs leading down into darkness'
                 downPortal.moveToLevel(prevLevel, prevLevel.getRandomEmptyTile())
                 #add portal in current level to previous level
                 upPortal = Portal()
                 upPortal._char = '<'
-                upPortal._name = 'The way up'
+                upPortal._name = 'a set of stairs leading up to safety'
                 upPortal.moveToLevel(curLevel, curLevel.getRandomEmptyTile())
                 #connect the two portals
                 downPortal.connectTo(upPortal)
@@ -190,6 +189,13 @@ class Game():
 
         #Set the game state
         self._state = Game.PLAYING
+
+        #Send welcome message to the player
+        Utilities.message('You are ' + self.player.name +
+                ', a young and fearless adventurer. It is time to begin your '
+                + 'legendary and without doubt heroic expedition into the '
+                + 'unknown. Good luck!', "GAME")
+
         return
 
     #TODO medium: implement saving and loading of gamestate
@@ -201,7 +207,9 @@ class Game():
 
     def nextLevel(self):
         """
-        Moves the game to the next level
+        Moves the game to the next level, can be used for debugging purposes.
+        This function is not called in normal gameplay. Current level
+        will be set based on the level on which the player resides.
         """
         if self._currentLevel < len(self.levels) - 1:
             self._currentLevel += 1
@@ -211,7 +219,9 @@ class Game():
 
     def previousLevel(self):
         """
-        Moves the game to the previous level
+        Moves the game to the previous level, can be used for debugging
+        purposes. This function is not called in normal gameplay. Current level
+        will be set based on the level on which the player resides.
         """
         if self._currentLevel > 0:
             self._currentLevel -= 1
@@ -223,7 +233,6 @@ class Game():
         """
         This function will handle one complete turn.
         """
-        print "running turn for level " + str(self.currentLevel)
         for c in self.currentLevel.characters:
             if c.state == Character.ACTIVE:
                 c.takeTurn()

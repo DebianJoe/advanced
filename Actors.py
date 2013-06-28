@@ -358,11 +358,11 @@ class Character(Actor):
 
         if damage > 0:
             Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' for ' + str(damage) + ' Damage.')
+                    + target.name + ' for ' + str(damage) + ' Damage.', "GAME")
             target.takeDamage(damage,self)
         else:
             Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' but it has no effect!')
+                    + target.name + ' but it has no effect!', "GAME")
 
     def takeDamage(self, amount, attacker):
         """
@@ -374,23 +374,23 @@ class Character(Actor):
         #apply damage if possible
         if amount > 0:
             self.currentHitPoints -= amount
-            Utilities.message(self.name.capitalize() + ' looses '
-                    + str(amount) + ' hitpoints (current: '
-                    + str(self.currentHitPoints) + ').')
         #check for death
         if self.currentHitPoints < 0:
+            Utilities.message(self.name.capitalize() + ' is killed!', "GAME")
             self._killedBy(attacker)
 
     def _killedBy(self, attacker):
         """
         This function handles the death of this Character
         """
-        Utilities.message(attacker.name + ' kills ' + self.name, "KILL")
-        #yield experience to the attacker
         if type(attacker) is Player:
+            #yield experience to the player
             attacker.gainXp(self.xpValue)
             Utilities.message(attacker.name + ' gains '
-                    + str(self.xpValue) + ' XP.', "XP")
+                    + str(self.xpValue) + ' XP.', "GAME")
+        if type(attacker) is Monster:
+            if attacker.killedByText != '':
+                Utilities.message(attacker.killedByText, "GAME")
         #transform this character into a corpse and remove AI
         self._char = '%'
         self._AI = None
@@ -407,8 +407,7 @@ class Character(Actor):
         if amount > 0:
             self.currentHitPoints += amount
             Utilities.message(self.name.capitalize() + ' gains '
-                    + str(amount) + ' hitpoints (current: '
-                    + str(self.currentHitPoints) + ').')
+                    + str(amount) + ' hitpoints.', "GAME")
 
     def takeTurn(self):
         """
@@ -486,6 +485,9 @@ class Player(Character):
         """
         Send player through specified portal.
         """
+        #Game message
+        Utilities.message(self.name.capitalize() +
+                ' follows ' + portal.name + '.', "GAME")
         #Move the player to the destination
         destinationLevel = portal.destinationPortal.level
         destinationTile = portal.destinationPortal.tile

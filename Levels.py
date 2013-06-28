@@ -183,8 +183,6 @@ class GeneratedLevel(Level):
                     new_monster = lib.getRandomMonster(self.difficulty)
                     new_monster.moveToLevel(self, target_tile)
 
-                    self.addCharacter(new_monster)
-
 
 class TownLevel(Level):
     """
