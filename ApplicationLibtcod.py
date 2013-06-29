@@ -279,8 +279,8 @@ class ApplicationLibtcod():
                 continue
             if choice == 0:
                 print "Start a new game"
-                self.showMessage('Oops...',
-                        'I don\'t know how to run a new game yet :-)', 36)
+                self.newGame()
+                self.showGameScreen()
                 continue
             elif choice == 1:
                 print "Continue previous game"
