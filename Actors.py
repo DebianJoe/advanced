@@ -4,6 +4,8 @@
 
 import random
 import Utilities
+import CONSTANTS
+
 
 ##########
 # ACTORS #
@@ -20,6 +22,7 @@ class Actor(object):
 
     #class variables
     _id = "ID not set"
+
     @property
     def id(self):
         """
@@ -28,6 +31,7 @@ class Actor(object):
         return self._id
 
     _name = "Name not set"
+
     @property
     def name(self):
         """
@@ -36,6 +40,7 @@ class Actor(object):
         return self._name
 
     _char = None
+
     @property
     def char(self):
         """
@@ -51,6 +56,7 @@ class Actor(object):
         Returns the Tile on which this Actor is located. Can be None.
         """
         return self._tile
+
     @tile.setter
     def tile(self, targetTile):
         """
@@ -61,14 +67,15 @@ class Actor(object):
         self._tile = targetTile
         targetTile.addActor(self)
 
-
     _level = None
+
     @property
     def level(self):
         """
         Returns level on which this Actor is located. Can be None.
         """
         return self._level
+
     @level.setter
     def level(self, targetLevel):
         """
@@ -80,6 +87,7 @@ class Actor(object):
         self.registerWithLevel(targetLevel)
 
     _baseMaxHitPoints = 0
+
     @property
     def maxHitPoints(self):
         """
@@ -92,12 +100,14 @@ class Actor(object):
         return self._baseMaxHitPoints + bonus
 
     _currentHitPoints = 0
+
     @property
     def currentHitPoints(self):
         """
         The current amount of hitpoints
         """
         return self._currentHitPoints
+
     @currentHitPoints.setter
     def currentHitPoints(self, hitPoints):
         if hitPoints > self.maxHitPoints:
@@ -112,12 +122,12 @@ class Actor(object):
         """
         This actor is in view of the player.
         """
-        
+
         return self._inView
 
     @inView.setter
     def inView(self, visible):
-        
+
         self._inView = visible
 
     #Constructor
@@ -137,7 +147,7 @@ class Actor(object):
 
     #functions
     def __str__(self):
-        return self._name + " " + super(Actor,self).__str__()
+        return self._name + " " + super(Actor, self).__str__()
 
     def registerWithLevel(self, level):
         """
@@ -145,7 +155,7 @@ class Actor(object):
         It has to be overridden in the Actor subclasses to ensure that the
         actor correctly registers with the level.
         """
-        raise Utilities.GameError('Missing implementation for registerWithLevel()')
+        raise Utilities.GameError('Missing implementation registerWithLevel()')
 
     def moveToRandomTile(self):
         """
@@ -200,12 +210,22 @@ class Actor(object):
         #move along the vector
         self.moveAlongVector(dx, dy)
 
+
 class Portal(Actor):
     """
     This class can be used to represent portals in and out of a level
     """
+    _message = ''
+
+    @property
+    def message(self):
+        """
+        In game message that should be displayed when portal is used.
+        """
+        return self._message
 
     _destination = None
+
     @property
     def destinationPortal(self):
         """
@@ -217,7 +237,7 @@ class Portal(Actor):
         """
         Constructor to create a new portal
         """
-        super(Portal,self).__init__()
+        super(Portal, self).__init__()
 
     def connectTo(self, otherPortal):
         """
@@ -231,6 +251,7 @@ class Portal(Actor):
         Makes the level aware that this portal is on it.
         """
         level.addPortal(self)
+
 
 ##############
 # CHARACTERS #
@@ -247,6 +268,7 @@ class Character(Actor):
 
     #Class variables
     _inventoryItems = []
+
     @property
     def inventoryItems(self):
         """
@@ -256,6 +278,7 @@ class Character(Actor):
         return self._inventoryItems
 
     _equipedItems = []
+
     @property
     def equipedItems(self):
         """
@@ -275,6 +298,7 @@ class Character(Actor):
     ACTIVE = 0
     DEAD = 1
     _state = ACTIVE
+
     @property
     def state(self):
         """
@@ -283,6 +307,7 @@ class Character(Actor):
         return self._state
 
     _xpValue = 0
+
     @property
     def xpValue(self):
         """
@@ -291,6 +316,7 @@ class Character(Actor):
         return self._xpValue
 
     _basePower = 0
+
     @property
     def power(self):
         """
@@ -303,6 +329,7 @@ class Character(Actor):
         return self._basePower + bonus
 
     _baseDefense = 0
+
     @property
     def defense(self):
         """
@@ -315,6 +342,7 @@ class Character(Actor):
         return self._baseDefense + bonus
 
     _AI = None
+
     @property
     def AI(self):
         """
@@ -329,7 +357,7 @@ class Character(Actor):
         by sub class constructors.
         """
         #call super class constructor
-        super(Character,self).__init__()
+        super(Character, self).__init__()
         #initialize class variables
         self._baseDefense = 0
         self._basePower = 1
@@ -357,11 +385,11 @@ class Character(Actor):
 
         if damage > 0:
             Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' for ' + str(damage) + ' Damage.')
-            target.takeDamage(damage,self)
+                    + target.name + ' for ' + str(damage) + ' Damage.', "GAME")
+            target.takeDamage(damage, self)
         else:
             Utilities.message(self.name.capitalize() + ' attacks '
-                    + target.name + ' but it has no effect!')
+                    + target.name + ' but it has no effect!', "GAME")
 
     def takeDamage(self, amount, attacker):
         """
@@ -373,23 +401,23 @@ class Character(Actor):
         #apply damage if possible
         if amount > 0:
             self.currentHitPoints -= amount
-            Utilities.message(self.name.capitalize() + ' looses '
-                    + str(amount) + ' hitpoints (current: '
-                    + str(self.currentHitPoints) + ').')
         #check for death
         if self.currentHitPoints < 0:
+            Utilities.message(self.name.capitalize() + ' is killed!', "GAME")
             self._killedBy(attacker)
 
     def _killedBy(self, attacker):
         """
         This function handles the death of this Character
         """
-        Utilities.message(attacker.name + ' kills ' + self.name, "KILL")
-        #yield experience to the attacker
         if type(attacker) is Player:
+            #yield experience to the player
             attacker.gainXp(self.xpValue)
             Utilities.message(attacker.name + ' gains '
-                    + str(self.xpValue) + ' XP.', "XP")
+                    + str(self.xpValue) + ' XP.', "GAME")
+        if type(attacker) is Monster:
+            if attacker.killedByText != '':
+                Utilities.message(attacker.killedByText, "GAME")
         #transform this character into a corpse and remove AI
         self._char = '%'
         self._AI = None
@@ -406,8 +434,7 @@ class Character(Actor):
         if amount > 0:
             self.currentHitPoints += amount
             Utilities.message(self.name.capitalize() + ' gains '
-                    + str(amount) + ' hitpoints (current: '
-                    + str(self.currentHitPoints) + ').')
+                    + str(amount) + ' hitpoints.', "GAME")
 
     def takeTurn(self):
         """
@@ -416,6 +443,7 @@ class Character(Actor):
         if self.AI is not None:
             self.AI.takeTurn()
 
+
 class Player(Character):
     """
     Sub class representing a player
@@ -423,17 +451,29 @@ class Player(Character):
     #class variables
 
     _xp = 0
+
     @property
-    def xp():
+    def xp(self):
         """
         Returns the current xp of the player.
         """
-    _playerLevel = 0
+        return self._xp
+
+    @property
+    def nextLevelXp(self):
+        """
+        Returns the required Xp to reach the next player level
+        """
+        return CONSTANTS.LEVEL_UP_BASE + self.playerLevel * CONSTANTS.LEVEL_UP_FACTOR
+
+    _playerLevel = 1
+
     @property
     def playerLevel(self):
         """
         Returns the current level of the player.
         """
+        return self._playerLevel
 
     #constructor
     def __init__(self):
@@ -442,7 +482,7 @@ class Player(Character):
         linked to a game tile. It should be moved to the tile after creation.
         """
         #call super class constructor
-        super(Player,self).__init__()
+        super(Player, self).__init__()
 
         #initialize all variables
         #Actor components
@@ -450,7 +490,7 @@ class Player(Character):
         self._char = '@'
         self._baseMaxHitPoints = 100
         self._currentHitPoints = 100
-        self._name = random.choice(('Joe','Wesley','Frost'))
+        self._name = random.choice(('Joe', 'Wesley', 'Frost'))
         #Character components
         self._baseDefense = 2
         self._basePower = 6
@@ -461,7 +501,7 @@ class Player(Character):
         self._playerLevel = 1
 
     #functions
-    def gainXp(self,amount):
+    def gainXp(self, amount):
         """
         Increase xp of this player with the given amount
         arguments
@@ -475,6 +515,8 @@ class Player(Character):
         """
         Send player through specified portal.
         """
+        #Game message
+        Utilities.message(portal.message, "GAME")
         #Move the player to the destination
         destinationLevel = portal.destinationPortal.level
         destinationTile = portal.destinationPortal.tile
@@ -537,6 +579,7 @@ class NPC(Character):
     Probably we'll need to override some inventory concepts
     """
 
+
 class Monster(Character):
     """
     Sub class representing a monster
@@ -546,6 +589,7 @@ class Monster(Character):
 
     #Class variables
     _flavorText = "Flavor text not set"
+
     @property
     def flavorText(self):
         """
@@ -554,6 +598,7 @@ class Monster(Character):
         return self._flavorText
 
     _killedByText = "Killed by text not set"
+
     @property
     def killedByText(self):
         """
@@ -569,7 +614,8 @@ class Monster(Character):
         """
         #call super class constructor
         #(ensure instance gets unique copies of class variables)
-        super(Monster,self).__init__()
+        super(Monster, self).__init__()
+
 
 #########
 # ITEMS #
@@ -594,11 +640,13 @@ class Equipment(Item):
     Might need more subclasses for weapons versus armor
     """
 
+
 class Consumable(Item):
     """
     Sub class for items that can be used.
     Not sure we might want a different class for scrolls and potions
     """
+
 
 class QuestItem(Item):
     """

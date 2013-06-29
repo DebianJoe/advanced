@@ -113,21 +113,21 @@ class Game():
         """
         return self._levels
 
-    _currentLevel = 0
+    _currentLevel = None
 
     @property
     def currentLevel(self):
         """
         Returns the current level
         """
-        return self.levels[self._currentLevel]
+        return self._currentLevel
 
     @currentLevel.setter
     def currentLevel(self, level):
         """
         Sets the current level
         """
-        self._currentLevel = self.levels.indexOf(level)
+        self._currentLevel = level
 
     _monsterLibrary = None
 
@@ -153,30 +153,33 @@ class Game():
 
     #functions
     def resetGame(self):
-        print "Reset game"
         #initialize monster library
         self._monsterLibrary = MonsterLibrary()
 
         #clear existing levels
         self._levels = []
-        self._currentLevel = 0
         #generate new levels
         prevLevel = None
-        for i in range(0, 10):
-            if i > 0:
-                prevLevel = self.levels[i - 1]
-            curLevel = GeneratedLevel(self, i + 1)  # difficulty > 0
+        #generate a town level
+        town = TownLevel(self, 1, 'Town')
+        self._levels.append(town)
+        self._currentLevel = town
+        for i in range(1, 8):
+            prevLevel = self.levels[i - 1]
+            curLevel = DungeonLevel(self, i , 'Dungeon level ' + str(i))
             self._levels.append(curLevel)
             if prevLevel is not None:
                 #add portal in previous level to current level
                 downPortal = Portal()
                 downPortal._char = '>'
-                downPortal._name = 'The way down'
+                downPortal._name = 'stairs leading down into darkness'
+                downPortal._message = 'You follow the stairs down, looking for more adventure.'
                 downPortal.moveToLevel(prevLevel, prevLevel.getRandomEmptyTile())
                 #add portal in current level to previous level
                 upPortal = Portal()
                 upPortal._char = '<'
-                upPortal._name = 'The way up'
+                upPortal._name = 'stairs leading up'
+                upPortal._message = 'You follow the stairs up, hoping to find the exit.'
                 upPortal.moveToLevel(curLevel, curLevel.getRandomEmptyTile())
                 #connect the two portals
                 downPortal.connectTo(upPortal)
@@ -186,10 +189,17 @@ class Game():
         firstLevel = self.levels[0]
         self.player.moveToLevel(firstLevel, firstLevel.getRandomEmptyTile())
         firstLevel.map.updateFieldOfView(
-            self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
+                self._player.tile.x, self._player.tile.y)
 
         #Set the game state
         self._state = Game.PLAYING
+
+        #Send welcome message to the player
+        Utilities.message('You are ' + self.player.name +
+                ', a young and fearless adventurer. It is time to begin your '
+                + 'legendary and without doubt heroic expedition into the '
+                + 'unknown. Good luck!', "GAME")
+
         return
 
     #TODO medium: implement saving and loading of gamestate
@@ -199,31 +209,10 @@ class Game():
     def saveGame(self, fileName):
         return
 
-    def nextLevel(self):
-        """
-        Moves the game to the next level
-        """
-        if self._currentLevel < len(self.levels) - 1:
-            self._currentLevel += 1
-            self.currentLevel.addPlayer(self.player)
-            self.currentLevel.map.updateFieldOfView(
-                self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
-
-    def previousLevel(self):
-        """
-        Moves the game to the previous level
-        """
-        if self._currentLevel > 0:
-            self._currentLevel -= 1
-            self.currentLevel.addPlayer(self.player)
-            self.currentLevel.map.updateFieldOfView(
-                self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
-
     def playTurn(self):
         """
         This function will handle one complete turn.
         """
-        print "running turn for level " + str(self.currentLevel)
         for c in self.currentLevel.characters:
             if c.state == Character.ACTIVE:
                 c.takeTurn()

@@ -6,6 +6,7 @@
 #TODO medium: this module should be made PEP8 compliant
 import random
 import math
+import CONSTANTS
 
 
 # rolling a hitdie
@@ -67,6 +68,21 @@ def from_dungeon_level(table, dungeon_level):
     return 0
 
 
+# This property is used by the message function to send game messages
+# to the application where they can be shown.
+_application = None
+
+
+@property
+def application():
+    return _application
+
+
+@application.setter
+def application(myApp):
+    _application = myApp
+
+
 def message(text, category=None):
     """
     Utility function to deal with in game messages.
@@ -78,11 +94,18 @@ def message(text, category=None):
     if category is None:
         #Default to console output
         print text
+    elif category.upper() == "GAME":
+        if application is not None:
+            application.addMessage(text)
+        else:
+            print "GAME: " + text
     elif category.upper() == "AI":
-        print "AI: " + text
+        if CONSTANTS.SHOW_AI_LOGGING is True:
+            print "AI: " + text
     else:
         #Default to console output
         print text
+
 
 def clamp(n, minn, maxn):
     """
@@ -91,6 +114,7 @@ def clamp(n, minn, maxn):
     """
     #Hurray for readability ;-)
     return max(min(maxn, n), minn)
+
 
 def distanceBetween(actor1, actor2):
     """
@@ -103,6 +127,7 @@ def distanceBetween(actor1, actor2):
     dy = actor1.tile.y - actor2.tile.y
     return math.sqrt(dx ** 2 + dy ** 2)
 
+
 def distanceBetweenPoints(x, y, u, v):
     """
     Return the distance between two points (x, y) and (u, v).
@@ -111,6 +136,7 @@ def distanceBetweenPoints(x, y, u, v):
     dx = x - u
     dy = y - v
     return math.sqrt(dx ** 2 + dy ** 2)
+
 
 def make_matrix(width, height, initial_value):
     """
@@ -121,6 +147,7 @@ def make_matrix(width, height, initial_value):
     """
 
     return [[initial_value for y in range(0, height)] for x in range(0, width)]
+
 
 def get_line_segments(x1, y1, x2, y2):
     """
@@ -163,6 +190,7 @@ def get_line_segments(x1, y1, x2, y2):
     if rev:
         points.reverse()
     return points
+
 
 def line_of_sight(matrix, x1, y1, x2, y2):
     """

@@ -10,8 +10,10 @@ import libtcodpy as libtcod
 from Game import Game
 from Game import Player
 import Actors
-from Game import MonsterLibrary
+import Maps
 import CONSTANTS
+import Utilities
+import textwrap
 
 #actual size of the window
 SCREEN_WIDTH = 85
@@ -20,6 +22,11 @@ SCREEN_HEIGHT = 50
 #libtcod parameters
 LIMIT_FPS = 20  # 20 frames-per-second maximum
 PANEL_HEIGHT = 7
+BAR_WIDTH = 20
+PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
+MSG_X = BAR_WIDTH + 2
+MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
+MSG_HEIGHT = PANEL_HEIGHT - 1
 
 #libtcod colors
 COLOR_DARK_WALL = libtcod.light_orange * libtcod.dark_grey * 0.2
@@ -63,7 +70,26 @@ class ApplicationLibtcod():
         """
         libtcod console (off screen) used to draw the panel
         """
-        return self.panelConsole
+        return self._panelConsole
+
+    _messages = None
+
+    @property
+    def messages(self):
+        """
+        returns the most recent game messages
+        """
+        return self._messages
+
+    def addMessage(self, new_msg):  # , color = libtcod.white):
+        #split the message if necessary, among multiple lines
+        new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
+        for line in new_msg_lines:
+            #only keep the last messages
+            if len(self.messages) == MSG_HEIGHT:
+                del self.messages[0]
+            #add the new line
+            self.messages.append(line)  # (line, color) )
 
     def __init__(self):
         """
@@ -80,8 +106,13 @@ class ApplicationLibtcod():
         self._mapConsole = libtcod.console_new(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         self._panelConsole = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 
+        #Prepare to receive messages from the game utilities
+        #(this allows the utilities to send game messages to this application)
+        self._messages = []
+        Utilities.application = self
+
         #Create a new game object for this application
-        self._game = Game(self)
+        #self._game = Game(self)
 
     ##########################################################################
     # show functions
@@ -323,8 +354,6 @@ class ApplicationLibtcod():
             #Let the game play a turn
             self.game.playTurn()
 
-
-
         #Clean up (restore whatever was behind this window)
         libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
         libtcod.console_flush()
@@ -337,19 +366,23 @@ class ApplicationLibtcod():
         This function ties into the debug menu. It is meant to allow execution
         of some test code. Feel free to change the contents of this function.
         """
-        lib = MonsterLibrary()
-        myRandom = lib.getRandomMonster(2)
-        myRat = lib.createMonster('rat')
-        print myRat
-        print myRandom
-        myRat.attack(myRandom)
-        myRat.attack(myRandom)
-        myRat.attack(myRandom)
+        #lib = MonsterLibrary()
+        #myRandom = lib.getRandomMonster(2)
+        #myRat = lib.createMonster('rat')
+        #print myRat
+        #print myRandom
+        #myRat.attack(myRandom)
+        #myRat.attack(myRandom)
+        #myRat.attack(myRandom)
+
+        myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        print myMap
 
     ##########################################################################
     # GameScreen functions
     ##########################################################################
     def newGame(self):
+        self._messages = []
         self._game = Game(self)
 
     def loadGame(self, fileName):
@@ -366,7 +399,7 @@ class ApplicationLibtcod():
         con = self.mapConsole
         libtcod.console_clear(con)
         level = self.game.currentLevel
-        
+
         # draw the map tiles
         for tile in level.map.explored_tiles:
             if tile.blocked:
@@ -402,31 +435,27 @@ class ApplicationLibtcod():
                         con, tile.x, tile.y, myActor.char, libtcod.BKGND_NONE)
 
             #Redraw player character (makes sure it is on top)
-            myActor = self.game.player
+            player = self.game.player
             libtcod.console_set_default_foreground(con, libtcod.white)
             libtcod.console_put_char(
-                con, myActor.tile.x, myActor.tile.y, 
-                myActor.char, libtcod.BKGND_NONE)
+                con, player.tile.x, player.tile.y,
+                player.char, libtcod.BKGND_NONE)
 
         #blit the contents of "con" to the root console
         libtcod.console_blit(con, 0, 0, CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, 0, 0, 0)
 
-        ##TODO hard: Need to manage field of view. Design not clear.
-        ##Frostlock: Ideally I would like to add the fov capability in the
-        ##game logic where it can be used by this class
-        ##Note the example code in previous project!
-      
+        ##Notes on field of view
+        ##
         ##Joe: Explain, the Fov is treated as a secondary map
         ##The question is do we wish to deal with it the same way?
         ##Ideally, if rooms are set before map is drawn, you save the
         ##generation of colors until inside FOV range, where you change
         ##the colors of them to match your final scheme, and then turn
-        ##them back to the "shadowed" colors once player has set an 
+        ##them back to the "shadowed" colors once player has set an
         ##"explored" option.
-
-        ##NOTE Wesley: 
+        ##NOTE Wesley:
         ##   I did this before in another project as handled by the Game.
-        ##   After each move the Game does a look_around() and marks a monster 
+        ##   After each move the Game does a look_around() and marks a monster
         ##   or tile as seen == True and in_range == True (if in fov).
         ##   Then we just draw tiles where seen, and monsters where in_range.
         ##   I will try add this tonight, it is pure python and simple and good
@@ -434,6 +463,67 @@ class ApplicationLibtcod():
 
         #TODO medium: create a GUI panel
         #Frostlock: this needs some game message log first in the game logic
+        panel = self.panelConsole
+        libtcod.console_set_default_background(panel, libtcod.black)
+        libtcod.console_clear(panel)
+
+        ##print the game messages, one line at a time
+        if self.messages is not None:
+            y = 1
+            for line in self.messages:
+                libtcod.console_set_default_foreground(panel, libtcod.white)
+                libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE,
+                        libtcod.LEFT, line)
+                y += 1
+
+        if player is not None:
+            #Player health bar
+            self.renderBar(panel, 1, 1, BAR_WIDTH, 'HP',
+                    player.currentHitPoints, player.maxHitPoints,
+                    libtcod.dark_red, libtcod.darker_gray)
+            #Player xp bar
+            self.renderBar(panel, 1, 2, BAR_WIDTH, 'XP',
+                    player.xp, player.nextLevelXp,
+                    libtcod.darker_green, libtcod.darker_gray)
+        if self.game.currentLevel is not None:
+            #Dungeon level
+            libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE,
+                    libtcod.LEFT, str(self.game.currentLevel.name))
+
+        #TODO: display names of objects under the mouse
+        # Frost: this would require running this loop constantly which is not
+        # happening at the moment. Currently it pauses to wait for the player to
+        # hit a key.
+        #libtcod.console_set_default_foreground(panel, libtcod.light_gray)
+        #libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE,
+        #        libtcod.LEFT, get_names_under_mouse())
+
+        #blit the contents of "panel" to the root console
+        libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH,
+                PANEL_HEIGHT, 0, 0, PANEL_Y)
+
+    def renderBar(self, panel, x, y, total_width,
+            name, value, maximum, bar_color, back_color):
+        """
+        Helper function to render interface bars
+        """
+        #render a bar (HP, experience, etc). first calculate the width of the bar
+        bar_width = int(float(value) / maximum * total_width)
+
+        #render the background first
+        libtcod.console_set_default_background(panel, back_color)
+        libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
+
+        #now render the bar on top
+        libtcod.console_set_default_background(panel, bar_color)
+        if bar_width > 0:
+            libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
+
+        #finally, some centered text with the values
+        libtcod.console_set_default_foreground(panel, libtcod.white)
+        libtcod.console_print_ex(panel, x + total_width / 2, y,
+                libtcod.BKGND_NONE, libtcod.CENTER,
+                name + ': ' + str(value) + '/' + str(maximum))
 
     def handleKeys(self):
         key = libtcod.console_wait_for_keypress(True)
@@ -471,7 +561,7 @@ class ApplicationLibtcod():
                 player.tryFollowPortalUp()
             # update field of vision
             self.game.currentLevel.map.updateFieldOfView(
-                player.tile.x, player.tile.y, CONSTANTS.TORCH_RADIUS)
+                player.tile.x, player.tile.y)
 
 #This is where it all starts!
 if __name__ == '__main__':
