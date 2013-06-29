@@ -113,21 +113,21 @@ class Game():
         """
         return self._levels
 
-    _currentLevel = 0
+    _currentLevel = None
 
     @property
     def currentLevel(self):
         """
         Returns the current level
         """
-        return self.levels[self._currentLevel]
+        return self._currentLevel
 
     @currentLevel.setter
     def currentLevel(self, level):
         """
         Sets the current level
         """
-        self._currentLevel = self.levels.indexOf(level)
+        self._currentLevel = level
 
     _monsterLibrary = None
 
@@ -158,24 +158,28 @@ class Game():
 
         #clear existing levels
         self._levels = []
-        self._currentLevel = 0
         #generate new levels
         prevLevel = None
-        for i in range(0, 10):
-            if i > 0:
-                prevLevel = self.levels[i - 1]
-            curLevel = GeneratedLevel(self, i + 1, 'Dungeon lvl ' + str(i + 1))
+        #generate a town level
+        town = TownLevel(self, 1, 'Town')
+        self._levels.append(town)
+        self._currentLevel = town
+        for i in range(1, 8):
+            prevLevel = self.levels[i - 1]
+            curLevel = DungeonLevel(self, i , 'Dungeon level ' + str(i))
             self._levels.append(curLevel)
             if prevLevel is not None:
                 #add portal in previous level to current level
                 downPortal = Portal()
                 downPortal._char = '>'
-                downPortal._name = 'a set of stairs leading down into darkness'
-                downPortal.moveToLevel(prevLevel, prevLevel. getRandomEmptyTile())
+                downPortal._name = 'stairs leading down into darkness'
+                downPortal._message = 'You follow the stairs down, looking for more adventure.'
+                downPortal.moveToLevel(prevLevel, prevLevel.getRandomEmptyTile())
                 #add portal in current level to previous level
                 upPortal = Portal()
                 upPortal._char = '<'
-                upPortal._name = 'a set of stairs leading up to safety'
+                upPortal._name = 'stairs leading up'
+                upPortal._message = 'You follow the stairs up, hoping to find the exit.'
                 upPortal.moveToLevel(curLevel, curLevel.getRandomEmptyTile())
                 #connect the two portals
                 downPortal.connectTo(upPortal)
@@ -185,7 +189,7 @@ class Game():
         firstLevel = self.levels[0]
         self.player.moveToLevel(firstLevel, firstLevel.getRandomEmptyTile())
         firstLevel.map.updateFieldOfView(
-            self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
+                self._player.tile.x, self._player.tile.y)
 
         #Set the game state
         self._state = Game.PLAYING
@@ -204,30 +208,6 @@ class Game():
 
     def saveGame(self, fileName):
         return
-
-    def nextLevel(self):
-        """
-        Moves the game to the next level, can be used for debugging purposes.
-        This function is not called in normal gameplay. Current level
-        will be set based on the level on which the player resides.
-        """
-        if self._currentLevel < len(self.levels) - 1:
-            self._currentLevel += 1
-            self.currentLevel.addPlayer(self.player)
-            self.currentLevel.map.updateFieldOfView(
-                self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
-
-    def previousLevel(self):
-        """
-        Moves the game to the previous level, can be used for debugging
-        purposes. This function is not called in normal gameplay. Current level
-        will be set based on the level on which the player resides.
-        """
-        if self._currentLevel > 0:
-            self._currentLevel -= 1
-            self.currentLevel.addPlayer(self.player)
-            self.currentLevel.map.updateFieldOfView(
-                self._player.tile.x, self._player.tile.y, CONSTANTS.TORCH_RADIUS)
 
     def playTurn(self):
         """

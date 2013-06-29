@@ -10,7 +10,7 @@ import libtcodpy as libtcod
 from Game import Game
 from Game import Player
 import Actors
-from Game import MonsterLibrary
+import Maps
 import CONSTANTS
 import Utilities
 import textwrap
@@ -366,19 +366,23 @@ class ApplicationLibtcod():
         This function ties into the debug menu. It is meant to allow execution
         of some test code. Feel free to change the contents of this function.
         """
-        lib = MonsterLibrary()
-        myRandom = lib.getRandomMonster(2)
-        myRat = lib.createMonster('rat')
-        print myRat
-        print myRandom
-        myRat.attack(myRandom)
-        myRat.attack(myRandom)
-        myRat.attack(myRandom)
+        #lib = MonsterLibrary()
+        #myRandom = lib.getRandomMonster(2)
+        #myRat = lib.createMonster('rat')
+        #print myRat
+        #print myRandom
+        #myRat.attack(myRandom)
+        #myRat.attack(myRandom)
+        #myRat.attack(myRandom)
+
+        myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        print myMap
 
     ##########################################################################
     # GameScreen functions
     ##########################################################################
     def newGame(self):
+        self._messages = []
         self._game = Game(self)
 
     def loadGame(self, fileName):
@@ -557,7 +561,7 @@ class ApplicationLibtcod():
                 player.tryFollowPortalUp()
             # update field of vision
             self.game.currentLevel.map.updateFieldOfView(
-                player.tile.x, player.tile.y, CONSTANTS.TORCH_RADIUS)
+                player.tile.x, player.tile.y)
 
 #This is where it all starts!
 if __name__ == '__main__':

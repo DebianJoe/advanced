@@ -2,6 +2,7 @@
 
 import CONSTANTS
 import Utilities
+from Actors import Portal
 from Maps import *
 
 
@@ -76,6 +77,15 @@ class Level(object):
         """
         return self._items
 
+    _subLevels = []
+
+    @property
+    def subLevels(self):
+        """
+        Returns the list of sub levels in this level
+        """
+        return self._subLevels
+
     #constructor
     def __init__(self, owner, difficulty, name):
         """
@@ -92,6 +102,7 @@ class Level(object):
         self._portals = []
         self._characters = []
         self._items = []
+        self._subLevels = []
 
     def removeActor(self, myActor):
         """
@@ -124,12 +135,18 @@ class Level(object):
         """
         self.items.append(item)
 
+    def getRandomEmptyTile(self):
+        """
+        Returns a randomly selected empty tile on this level.
+        """
+        if self.map is None:
+            return None
+        return self.map.getRandomEmptyTile()
 
-class GeneratedLevel(Level):
+
+class DungeonLevel(Level):
     """
-    Class representing a randomly generated level
-    Specialised logic to generate a random map.
-    We may have different flavors (algorithms of these
+    Class representing a randomly generated dungeon level.
     """
     #constructor
     def __init__(self, owner, difficulty, name):
@@ -141,20 +158,11 @@ class GeneratedLevel(Level):
             name - a textual name for this level
         """
         #call constructor of super class
-        super(GeneratedLevel, self).__init__(owner, difficulty, name)
+        super(DungeonLevel, self).__init__(owner, difficulty, name)
         #generate the map
-        self._map = Map(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        self._map = DungeonMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         #add some monsters
         self._placeMonsters()
-
-    def getRandomEmptyTile(self):
-        emptyTile = None
-        while emptyTile is None:
-            #pick a random room
-            aRoom = random.choice(self.map.rooms)
-            #find an empty tile in the room
-            emptyTile = aRoom.getRandomEmptyTile()
-        return emptyTile
 
     def _placeMonsters(self):
         """
@@ -186,8 +194,74 @@ class GeneratedLevel(Level):
 
 class TownLevel(Level):
     """
-    Class representing a fixed town level
-    Specalised class that uses a fixed map and fixed characters (for example
-    town vendors)
+    Class representing a randomly generated town level.
     """
-    #TODO
+
+    #constructor
+    def __init__(self, owner, difficulty, name):
+        """
+        Constructor to create a new generated level.
+        Arguments
+            owner - Game object that owns this level
+            difficulty - Difficulty of this level
+            name - a textual name for this level
+        """
+        #call constructor of super class
+        super(TownLevel, self).__init__(owner, difficulty, name)
+        #generate the map
+        self._map = TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        #generate sublevels for the houses
+        for house in self.map.houses:
+            self.generateHouseInterior(house)
+
+    def generateHouseInterior(self, house):
+        """
+        This function will create a sublevel to represent the house interior.
+        arguments
+            house - one of the house areas on the town map
+        """
+        #consider all the possible locations for a door
+        doorLocations = [(x, y)
+                for x in range(house.x1 + 1, house.x2 - 1)
+                for y in [house.y1, house.y2]]
+        doorLocations = doorLocations + [(x, y)
+                for x in [house.x1, house.x2]
+                for y in range(house.y1 + 1, house.y2 - 1)]
+        #Select actual location randomly
+        doorX, doorY = random.choice(doorLocations)
+        doorTile = self.map.tiles[doorX][doorY]
+        #Cut a hole in the wall for the door
+        doorTile.blocked = False
+        doorTile.blockSight = False
+        #Create the door that leads into the house
+        doorIn = Portal()
+        doorIn._char = '>'
+        doorIn._name = 'door'
+        doorIn._message = 'You enter the house.'
+        doorIn.moveToLevel(self, doorTile)
+        #Generate the level that represents the interior of the house
+        houseLevel = SingleRoomLevel(self.game, self.difficulty, 'house', house)
+        self.subLevels.append(houseLevel)
+        doorTile = houseLevel.map.tiles[doorX][doorY]
+        #Create the door that leads out of the house
+        doorOut = Portal()
+        doorOut._char = '<'
+        doorOut._name = 'door'
+        doorOut._message = 'You leave the house.'
+        doorOut.moveToLevel(houseLevel, doorTile)
+        #Connect the two doors
+        doorIn.connectTo(doorOut)
+
+
+class SingleRoomLevel(Level):
+    """
+    This class implements a level with only one room.
+    It can for example be used to represent the interior of a house
+    arguments
+        area - the area that represents the room
+    """
+    def __init__(self, owner, difficulty, name, area):
+        #call constructor of super class
+        super(SingleRoomLevel, self).__init__(owner, difficulty, name)
+        #generate the map
+        self._map = SingleRoomMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT, area)

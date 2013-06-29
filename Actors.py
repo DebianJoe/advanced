@@ -155,7 +155,7 @@ class Actor(object):
         It has to be overridden in the Actor subclasses to ensure that the
         actor correctly registers with the level.
         """
-        raise Utilities.GameError('Missing implementation for registerWithLevel()')
+        raise Utilities.GameError('Missing implementation registerWithLevel()')
 
     def moveToRandomTile(self):
         """
@@ -215,6 +215,14 @@ class Portal(Actor):
     """
     This class can be used to represent portals in and out of a level
     """
+    _message = ''
+
+    @property
+    def message(self):
+        """
+        In game message that should be displayed when portal is used.
+        """
+        return self._message
 
     _destination = None
 
@@ -508,8 +516,7 @@ class Player(Character):
         Send player through specified portal.
         """
         #Game message
-        Utilities.message(self.name.capitalize() +
-                ' follows ' + portal.name + '.', "GAME")
+        Utilities.message(portal.message, "GAME")
         #Move the player to the destination
         destinationLevel = portal.destinationPortal.level
         destinationTile = portal.destinationPortal.tile
