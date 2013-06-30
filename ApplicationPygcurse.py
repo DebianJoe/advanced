@@ -280,6 +280,7 @@ class ApplicationPygcurse():
             elif choice == 1:
                 print "Back"
                 show_menu = False
+        self.win.pop_surface()
 
     def showGameScreen(self):
 
