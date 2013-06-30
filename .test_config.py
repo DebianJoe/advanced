@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# This tests dungeons.conf for syntax errors, 
+# This tests dungeons.conf for syntax errors,
 # valid numbers and existing function & class names.
 
 # This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ import sys
 import json
 import random
 import ConfigParser
-import dungeons
+import AI
 
 red = "\033[1;31m"
 green = "\033[1;32m"
@@ -44,7 +44,7 @@ def is_string(dic, key):
     """
     Test if the key exists in dictionary.
     """
-    
+
     global has_errors
     if not has_key(dic, key):
         has_errors = True
@@ -53,7 +53,7 @@ def is_numeric(dic, key):
     """
     Test if the key value in dictionary is a number.
     """
-    
+
     global has_errors
     if has_key(dic, key):
         try:
@@ -66,7 +66,7 @@ def is_hitdie(dic, key):
     """
     Test if the key value in dictionary is a hitdie.
     """
-    
+
     global has_errors
     if has_key(dic, key):
         try:
@@ -80,12 +80,12 @@ def is_hitdie(dic, key):
             print(yellow + '\t\t"' + key + '" is not numeric' + reset)
             print(yellow + '\t' + "Valid hitdies consist of two integers" + reset)
             print(yellow + '\t' + "separated by a letter d" + reset)
-            
+
 def has_attrib(target, dic, key):
     """
-    Test if the key value in dictionary is a Class or Function in dungeons.py.
+    Test if the key value in dictionary is a Class or Function in target import.
     """
-    
+
     global has_errors
     if has_key(dic, key):
         try:
@@ -101,7 +101,7 @@ def is_list(dic, key):
     """
     Test if the key value in dictionary is a list.
     """
-    
+
     global has_errors
     if has_key(dic, key):
         try:
@@ -116,7 +116,7 @@ def is_list_of_list(dic, key):
     """
     Test if the key value in dictionary is a list.
     """
-    
+
     global has_errors
     if has_key(dic, key):
         try:
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     except Exception, e:
         print(red + str(e) + reset)
         sys.exit(1)
-    
+
     #TEST LISTS SECTION HERE
     lists = dict(config.items('lists'))
     print('Checking lists section')
@@ -157,23 +157,23 @@ if __name__ == '__main__':
 
         # TEST MONSTER HERE
         is_string(monster, 'char')
+        is_string(monster, 'name')
         is_list_of_list(monster, 'chance')
         is_list(monster, 'color')
         is_hitdie(monster, 'hitdie')
         is_numeric(monster, 'defense')
         is_numeric(monster, 'power')
         is_numeric(monster, 'xp')
-        has_attrib(dungeons, monster, 'death_function')
-        has_attrib(dungeons, monster, 'ai_component')
-    
+        has_attrib(AI, monster, 'ai')
+
     print('Checking items section')
     for item_name in config.get('lists', 'item list').split(', '):
         item = dict(config.items(item_name))
         print('* testing %s...' % item_name)
-        
+
         # TEST ITEM HERE
         is_list_of_list(item, 'chance')
-    
+
     if has_errors:
         print(red + '\nUnit test failed :(' + reset)
     else:

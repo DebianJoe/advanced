@@ -108,12 +108,16 @@ class MonsterLibrary(Library):
         newMonster._baseMaxHitPoints = \
                 Utilities.roll_hit_die(monster_data['hitdie'])
         newMonster._currentHitPoints = newMonster._baseMaxHitPoints
-        newMonster._name = monster_key
+        newMonster._name = monster_data['name']
         #Character components
+
         newMonster._baseDefense = int(monster_data['defense'])
         newMonster._basePower = int(monster_data['power'])
         newMonster._xpValue = int(monster_data['xp'])
-        newMonster._AI = AI.BasicMonsterAI(newMonster)
+        #gets a class object by name; and instanstiate it if not None
+        ai_class = eval('AI.' + monster_data['ai'])
+        newMonster._AI = ai_class and ai_class(newMonster) or None
+
         #Monster components
         newMonster._flavorText = monster_data['flavor']
         newMonster._killedByText = monster_data['killed_by']
