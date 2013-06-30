@@ -114,7 +114,7 @@ class ApplicationPygcurse():
         #Create a new game object for this application
         #self._game = Game(self)
 
-    def showMenu(self, header, options, width):
+    def showMenu(self, header, options, width=20, height=10):
         """
         This function will show a menu. The application waits for user input
         before returning the selected option.
@@ -127,10 +127,13 @@ class ApplicationPygcurse():
         if len(options) > 26:
             raise ValueError('Cannot have a menu with more than 26 options.')
 
-        # the height is the number of options
-        # plus a few for the header and borders
-        menu_height = int(SCREEN_HEIGHT - len(options) / 2.) + 4
-
+        # Show in the middle of the screen.
+        menu_region = (
+            self.win.centerx / 2,
+            self.win.centery / 2 + (height / 2),
+            width,
+            height)
+        
         # a list from a-n, where n is the length of our options
         hotkeys = [chr(ord('a') + i) for i in range(0, len(options))]
 
@@ -140,13 +143,6 @@ class ApplicationPygcurse():
         for counter, option_text in enumerate(options):
             menu_choices.append('(%s) %s' % ((hotkeys[counter]), option_text))
         menu_choices = '\n'.join(menu_choices)
-        
-        # the region sets where on the screen to show the box.
-        # Show in the middle of the screen.
-        #x = SCREEN_WIDTH / 2 - width / 2
-        #y = SCREEN_HEIGHT / 2 - height / 2
-        menu_region = (self.win.centerx / 2, self.win.centery / 2,
-            width, len(options) + 6)
         
         # construct the menu as a textbox object. It recognizes newlines.
         # this guy draw a nice border for us too.
@@ -172,82 +168,102 @@ class ApplicationPygcurse():
             if key in hotkeys:
                 return hotkeys.index(key)
 
-    def showMessage(self, header, message, width):
+    def showMessage(self, header, message, width=20, height=10):
         """
         This function will show a pop up message in the middle of the screen.
         It waits for the user to acknowledge the message by hitting enter or
         escape
         """
         
+        # Show in the middle of the screen.
+        menu_region = (
+            self.win.centerx / 2,
+            self.win.centery / 2 + (height / 2),
+            width,
+            height)
+
         textbox = pygcurse.PygcurseTextbox(
             self.win,
-            region=(0, 0, 20, 20),
+            region=menu_region,
             fgcolor='white',
             bgcolor='black',
-            border='basic',
-            wrap=True
-            )
+            caption=header,
+            text=message,
+            margin=2,
+            wrap=True,
+            border='.')
+
+        # tell the textbox to draw itself onto our win canvas
         textbox.update()
+
+        # update the screen and handle keypresses
+        self.win.update()
+        menu_busy = True
+        while menu_busy:
+            key = pygcurse.waitforkeypress(LIMIT_FPS)
+            if key is None or key == '\r':
+                return None
         
         
-        #calculate total height for the header (after auto-wrap)
-        header_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, header)
-        if header == '':
-            header_height = 0
-        #calculate total height for the message (after auto-wrap)
-        msg_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, message)
-        if message == '':
-            msg_height = 0
-        height = header_height + msg_height
+        ##calculate total height for the header (after auto-wrap)
+        #header_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, header)
+        #if header == '':
+            #header_height = 0
+        ##calculate total height for the message (after auto-wrap)
+        #msg_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, message)
+        #if message == '':
+            #msg_height = 0
+        #height = header_height + msg_height
 
-        #create an off-screen console that represents the message window
-        window = libtcod.console_new(width, height)
+        ##create an off-screen console that represents the message window
+        #window = libtcod.console_new(width, height)
 
-        #print the header, with auto-wrap
-        libtcod.console_set_default_foreground(window, libtcod.red)
-        libtcod.console_print_rect_ex(window, 0, 0, width, height, libtcod.BKGND_NONE, libtcod.LEFT, header)
+        ##print the header, with auto-wrap
+        #libtcod.console_set_default_foreground(window, libtcod.red)
+        #libtcod.console_print_rect_ex(window, 0, 0, width, height, libtcod.BKGND_NONE, libtcod.LEFT, header)
 
-        #print the message, with auto-wrap
-        libtcod.console_set_default_foreground(window, libtcod.white)
-        libtcod.console_print_rect_ex(window, 0, header_height, width, height, libtcod.BKGND_NONE, libtcod.LEFT, message)
+        ##print the message, with auto-wrap
+        #libtcod.console_set_default_foreground(window, libtcod.white)
+        #libtcod.console_print_rect_ex(window, 0, header_height, width, height, libtcod.BKGND_NONE, libtcod.LEFT, message)
 
-        #center the pop up on the screen
-        x = SCREEN_WIDTH / 2 - width / 2
-        y = SCREEN_HEIGHT / 2 - height / 2
+        ##center the pop up on the screen
+        #x = SCREEN_WIDTH / 2 - width / 2
+        #y = SCREEN_HEIGHT / 2 - height / 2
 
-        #store the current view
-        behind_window = libtcod.console_new(width, height)
-        libtcod.console_blit(0, x, y, width, height, behind_window, 0, 0, 1.0, 1.0)
+        ##store the current view
+        #behind_window = libtcod.console_new(width, height)
+        #libtcod.console_blit(0, x, y, width, height, behind_window, 0, 0, 1.0, 1.0)
 
-        #blit the contents of "window" to the root console
-        libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
+        ##blit the contents of "window" to the root console
+        #libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
 
-        #present the root console to the player and wait for a key-press
-        libtcod.console_flush()
-        #Loop until player accepts message using enter or escape
-        returnMsg = ''
-        while not libtcod.console_is_window_closed():
-            key = libtcod.console_wait_for_keypress(True)
-            #TODO: Remove in next libtcod version
-            #Attention: dirty hack, bug in libtcod fires keypress twice...
-            key = libtcod.console_wait_for_keypress(True)
-            #Wait for enter or escape
-            if key.vk == libtcod.KEY_ESCAPE:
-                returnMsg = 'Escape'
-                break
-            if key.vk == libtcod.KEY_ENTER:
-                returnMsg = 'Enter'
-                break
+        ##present the root console to the player and wait for a key-press
+        #libtcod.console_flush()
+        ##Loop until player accepts message using enter or escape
+        #returnMsg = ''
+        #while not libtcod.console_is_window_closed():
+            #key = libtcod.console_wait_for_keypress(True)
+            ##TODO: Remove in next libtcod version
+            ##Attention: dirty hack, bug in libtcod fires keypress twice...
+            #key = libtcod.console_wait_for_keypress(True)
+            ##Wait for enter or escape
+            #if key.vk == libtcod.KEY_ESCAPE:
+                #returnMsg = 'Escape'
+                #break
+            #if key.vk == libtcod.KEY_ENTER:
+                #returnMsg = 'Enter'
+                #break
 
-        #Clean up (restore whatever was behind this window)
-        libtcod.console_blit(behind_window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
-        libtcod.console_flush()
+        ##Clean up (restore whatever was behind this window)
+        #libtcod.console_blit(behind_window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
+        #libtcod.console_flush()
 
-        return returnMsg
+        #return returnMsg
 
     def showWelcomeScreen(self):
         
-        self.win.backgroundimage = pygame.image.load('./media/menu_background.png')
+        self.win.backgroundimage = pygame.image.load(
+            './media/menu_background.png')
         menu_choices = ['Start a new game',
                         'Continue previous game',
                         'Go to debug mode',
