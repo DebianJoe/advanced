@@ -253,25 +253,21 @@ class ApplicationPygcurse():
             elif choice == 3:
                 print "Quiting"
                 show_menu = False
-        self.win.backgroundimage = None
+        #self.win.backgroundimage = None
 
     def showDebugScreen(self):
         
+        # note that the background image is still set from the welcome screen
+        
         #store the current view
-        behind_window = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
-        libtcod.console_blit(0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, behind_window, 0, 0, 1.0, 1.0)
+        self.win.push_surface()
 
-        #show the background image, at twice the regular console resolution
-        img = libtcod.image_load('./media/menu_debug.png')
-        libtcod.image_blit_2x(img, 0, 0, 0)
-
-        while not libtcod.console_is_window_closed():
-            #show options and wait for the player's choice
-            choice = self.showMenu('Select debug option:',
-                        ['Run some test code!',      # Choice 0
-                        'Show me some game stuff!',  # Choice 1
-                        'Back'],                     # Choice 2
-                        36)
+        menu_choices = ['Run some test code!',
+                        'Back',
+                        ]
+        show_menu = True
+        while show_menu:
+            choice = self.showMenu('Select debug option', menu_choices, 36)
             #interpret choice
             if choice is None:
                 continue
@@ -282,15 +278,8 @@ class ApplicationPygcurse():
                         'There might be some output in the console...', 36)
                 continue
             elif choice == 1:
-                print "Showing some game stuff!"
-                self.newGame()
-                self.showGameScreen()
-            elif choice == 2:  # quit
                 print "Back"
-                break
-        #Clean up (restore whatever was behind this window)
-        libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
-        libtcod.console_flush()
+                show_menu = False
 
     def showGameScreen(self):
 
