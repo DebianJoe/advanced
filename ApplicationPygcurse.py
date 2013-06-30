@@ -201,64 +201,10 @@ class ApplicationPygcurse():
         menu_busy = True
         while menu_busy:
             key = pygcurse.waitforkeypress(LIMIT_FPS)
-            if key is None or key == '\r':
-                return None
-        
-        
-        ##calculate total height for the header (after auto-wrap)
-        #header_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, header)
-        #if header == '':
-            #header_height = 0
-        ##calculate total height for the message (after auto-wrap)
-        #msg_height = libtcod.console_get_height_rect(0, 0, 0, width, SCREEN_HEIGHT, message)
-        #if message == '':
-            #msg_height = 0
-        #height = header_height + msg_height
-
-        ##create an off-screen console that represents the message window
-        #window = libtcod.console_new(width, height)
-
-        ##print the header, with auto-wrap
-        #libtcod.console_set_default_foreground(window, libtcod.red)
-        #libtcod.console_print_rect_ex(window, 0, 0, width, height, libtcod.BKGND_NONE, libtcod.LEFT, header)
-
-        ##print the message, with auto-wrap
-        #libtcod.console_set_default_foreground(window, libtcod.white)
-        #libtcod.console_print_rect_ex(window, 0, header_height, width, height, libtcod.BKGND_NONE, libtcod.LEFT, message)
-
-        ##center the pop up on the screen
-        #x = SCREEN_WIDTH / 2 - width / 2
-        #y = SCREEN_HEIGHT / 2 - height / 2
-
-        ##store the current view
-        #behind_window = libtcod.console_new(width, height)
-        #libtcod.console_blit(0, x, y, width, height, behind_window, 0, 0, 1.0, 1.0)
-
-        ##blit the contents of "window" to the root console
-        #libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
-
-        ##present the root console to the player and wait for a key-press
-        #libtcod.console_flush()
-        ##Loop until player accepts message using enter or escape
-        #returnMsg = ''
-        #while not libtcod.console_is_window_closed():
-            #key = libtcod.console_wait_for_keypress(True)
-            ##TODO: Remove in next libtcod version
-            ##Attention: dirty hack, bug in libtcod fires keypress twice...
-            #key = libtcod.console_wait_for_keypress(True)
-            ##Wait for enter or escape
-            #if key.vk == libtcod.KEY_ESCAPE:
-                #returnMsg = 'Escape'
-                #break
-            #if key.vk == libtcod.KEY_ENTER:
-                #returnMsg = 'Enter'
-                #break
-
-        ##Clean up (restore whatever was behind this window)
-        #libtcod.console_blit(behind_window, 0, 0, width, height, 0, x, y, 1.0, 1.0)
-        #libtcod.console_flush()
-
-        #return returnMsg
+            if key is None:
+                return 'Escape'
+            elif key == '\r':
+                return 'Enter'
 
     def showWelcomeScreen(self):
         
