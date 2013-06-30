@@ -1,6 +1,8 @@
+import pygame
+
 black = (0, 0, 0)
 white = (255, 255, 255)
-transparent = (0, 0, 0, 0)
+transparent = pygame.Color(0, 0, 0, 0)
 
 # complex colors
 
