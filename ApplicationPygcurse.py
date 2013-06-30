@@ -294,6 +294,7 @@ class ApplicationPygcurse():
 
     def showGameScreen(self):
 
+        self.win.push_surface()
         while True:
             self.renderAll()
             #handle keys and exit game if needed
@@ -303,6 +304,7 @@ class ApplicationPygcurse():
 
             #Let the game play a turn
             self.game.playTurn()
+        self.win.pop_surface()
 
     ##########################################################################
     # DebugScreen functions
