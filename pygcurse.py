@@ -340,7 +340,7 @@ def pygprint(self, obj='', *objs, sep=' ', end='\n', fgcolor=None, bgcolor=None,
         """
         Push the current surface onto a stack and copy it as the current.
         """
-        
+
         self._surfacestack.append(self._surfaceobj)
         self._surfaceobj = self._surfaceobj.copy()
 
@@ -349,7 +349,7 @@ def pygprint(self, obj='', *objs, sep=' ', end='\n', fgcolor=None, bgcolor=None,
         """
         Pop the last surface on the stack and make it the current.
         """
-        
+
         if self._surfacestack:
             self._surfaceobj = self._surfacestack.pop()
 
@@ -1362,10 +1362,10 @@ def pygprint(self, obj='', *objs, sep=' ', end='\n', fgcolor=None, bgcolor=None,
     def _propsetcursorx(self, value):
         """
         Set the cursor's x coordinate.
-        
-        value - The new x coordinate. A negative value can be used to specify 
-        the x coordinate in terms of its relative distance to the right border 
-        of the surface. No operation will be performed if value is greater than 
+
+        value - The new x coordinate. A negative value can be used to specify
+        the x coordinate in terms of its relative distance to the right border
+        of the surface. No operation will be performed if value is greater than
         or equal to the width of the surface.
         """
         x = int(value)
@@ -1385,10 +1385,10 @@ def pygprint(self, obj='', *objs, sep=' ', end='\n', fgcolor=None, bgcolor=None,
     def _propsetcursory(self, value):
         """
         Set the cursor's y coordinate.
-        
-        value - The new y coordinate. A negative value can be used to specify 
-        the y coordinate in terms of its relative distance to the bottom border 
-        of the surface. No operation will be performed if value is greater than 
+
+        value - The new y coordinate. A negative value can be used to specify
+        the y coordinate in terms of its relative distance to the bottom border
+        of the surface. No operation will be performed if value is greater than
         or equal to the height of the surface.
         """
         y = int(value)
@@ -2541,7 +2541,10 @@ def waitforkeypress(fps=None, handle_special_keys=False):
         clock = pygame.time.Clock()
 
     while True:
-        for event in pygame.event.get([KEYDOWN, QUIT]):
+        #Frost: I commented out the last part of the next command.
+        #without this change no events were detected and the application became
+        #unresponsive.
+        for event in pygame.event.get():  # [KEYDOWN, QUIT]):
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
