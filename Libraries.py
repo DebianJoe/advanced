@@ -42,6 +42,16 @@ class MonsterLibrary(Library):
     """
 
     #class variables
+
+    _monsterChances = {}
+
+    @property
+    def monsterChances(self):
+        """
+        Returns the chance table for monster occurrences.
+        """
+        return self._monsterChances
+
     _uniqueMonsters = []
 
     @property
@@ -79,6 +89,12 @@ class MonsterLibrary(Library):
         #initialize class variables
         self._uniqueMonsters = []
         self._regularMonsters = []
+        self._monsterChances = {}
+        for monster_name in self.configParser.get('lists', 'monster list').split(', '):
+            chance_table = json.loads(self.configParser.get(monster_name, 'chance'))
+            self._monsterChances[monster_name] = chance_table
+
+
 
     def createMonster(self, monster_key):
         """
@@ -137,20 +153,88 @@ class MonsterLibrary(Library):
         return max_monsters
 
     def getRandomMonster(self, difficulty):
-        #TODO: read these chances at creation time of the library, no
-        #sense in doing it again for every monster
-
-        #chance of each monster
-        monster_chances = {}
-        for monster_name in self.configParser.get('lists', 'monster list').split(', '):
-            chance_table = json.loads(self.configParser.get(monster_name, 'chance'))
-            monster_chances[monster_name] = Utilities.from_dungeon_level(chance_table, difficulty)
-
         #Avoid recreating unique monsters
         for unique_monster in self.uniqueMonsters:
             del monster_chances[unique_monster.id]
 
         #create a random monster
-        choice = Utilities.random_choice(monster_chances)
+        choice = Utilities.random_choice(self.monsterChances, difficulty)
         monster = self.createMonster(choice)
         return monster
+
+
+class ItemLibrary(Library):
+    """
+    This class represents a library of items. Logic to create items is
+    implemented in this class.
+    """
+
+    _itemChances = {}
+
+    @property
+    def itemChances(self):
+        """
+        Returns the chance table for item occurrences.
+        """
+        return self._itemChances
+
+    _items = []
+
+    @property
+    def items(self):
+        """
+        Returns a list of the items that this library has created.
+        """
+        return self._items
+
+    def __init__(self):
+        """
+        Constructor to create a new item library
+        """
+        #initialize configParser
+        config = ConfigParser.ConfigParser()
+        config.read(CONSTANTS.MONSTER_CONFIG)
+        #call super class constructor
+        super(ItemLibrary, self).__init__(config)
+        #initialize class variables
+        self._items = []
+        self._itemChances = {}
+        for item_name in self.configParser.get('lists', 'item list').split(', '):
+            chance_table = json.loads(self.configParser.get(item_name, 'chance'))
+            self._itemChances[item_name] = chance_table
+
+    def createItem(self, item_key):
+        """
+        Function to create and initialize a new Item.
+        Arguments
+            item_key - string that identifies an item in the config file.
+        """
+        # load the item data from the config
+        item_data = dict(self.configParser.items(item_key))
+        item_data["key"] = item_key
+
+        #create the correct type of item
+        item_class = eval(item_data['type'])
+        newItem = item_class and item_class(item_data) or None
+
+        if newItem is None:
+            raise Utilities.GameError('Failed to create item type ' + item_data['type'])
+
+        #initialize all variables
+
+        # register the new item
+        self.items.append(newItem)
+        return newItem
+
+    def getMaxItemsPerRoomForDifficulty(self, difficulty):
+        #maximum number of items per room
+        max_items = Utilities.from_dungeon_level(
+                json.loads(self.configParser.get('lists', 'max items')),
+                difficulty)
+        return max_items
+
+    def getRandomItem(self, difficulty):
+        #create a random item
+        choice = Utilities.random_choice(self.itemChances, difficulty)
+        item = self.createItem(choice)
+        return item

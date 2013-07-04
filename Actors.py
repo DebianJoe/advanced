@@ -293,7 +293,7 @@ class Character(Actor):
         Returns a list of all items in this characters possession.
         Includes equiped and unequiped items.
         """
-        return self._inventoryItems.append(self._equipedItems)
+        return self._inventoryItems + self._equipedItems
 
     ACTIVE = 0
     DEAD = 1
@@ -373,6 +373,47 @@ class Character(Actor):
         Makes the level aware that this character is on it.
         """
         level.addCharacter(self)
+
+    def addItem(self, item):
+        """
+        adding item puts it in this characters inventory
+        """
+        self.inventoryItems.append(item)
+        #TODO: check for auto equip
+
+    def pickUpItem(self, item):
+        """
+        Make this character pick up an item.
+        Arguments
+            item - the item to be picked up
+        """
+        #remove the item from its tile
+        if item.tile is not None:
+            item.tile.removeActor(item)
+        #add the item to the inventory of this character
+        self.addItem(item)
+        #message
+        Utilities.message(self.name.capitalize() + ' picks up a '
+                    + item.name + '.', "GAME")
+
+    def dropItem(self, item):
+        """
+        Make this character drop an item.
+        Arguments
+            item - the item to be dropped
+        """
+        raise Utilities.GameError("character.dropItem() misses implementation")
+        #find the item in the characters inventory
+        #if the item is found
+        #remove it from the characters invetory
+        #add it to the current tile of the character
+        self.inventoryItems.remove(item)
+        self.equipedItems.remove(item)
+        #add the item to the inventory of this character
+        self.tile.addActor(item)
+        #message
+        Utilities.message(self.name.capitalize() + ' drops a '
+                    + item.name + '.', "GAME")
 
     def attack(self, target):
         """
@@ -511,6 +552,7 @@ class Player(Character):
         #TODO:
         #Check for level up
 
+
     def followPortal(self, portal):
         """
         Send player through specified portal.
@@ -571,6 +613,25 @@ class Player(Character):
             if type(a) is Portal and a.char == '>':
                 self.followPortal(a)
                 break
+
+    def tryPickUp(self):
+        """
+        Player attempts to pick up something on the current location.
+        This function is meant to be called from the GUI.
+        """
+        #check if there is an item on the current tile
+        for a in self.tile.actors:
+            if isinstance(a, Item):
+                self.pickUpItem(a)
+
+    def tryUseItem(self, item):
+        """
+        Player attempts to use an item.
+        This function is meant to be called from the GUI.
+        """
+        print 'trying to use a ' + item.name
+        #TODO
+        print 'IMPLEMENTATION MISSING'
 
 
 class NPC(Character):
@@ -633,6 +694,21 @@ class Item(Actor):
         """
         level.addItem(self)
 
+    #constructor
+    def __init__(self, item_data):
+        """
+        Creates a new Item object, normally not used directly but called
+        by sub class constructors.
+        """
+        #call super class constructor
+        super(Item, self).__init__()
+        #Initialize Actor components
+        self._id = item_data['key']
+        self._char = item_data['char']
+        self._baseMaxHitPoints = 1
+        self._currentHitPoints = self._baseMaxHitPoints
+        self._name = item_data['name']
+
 
 class Equipment(Item):
     """
@@ -640,12 +716,50 @@ class Equipment(Item):
     Might need more subclasses for weapons versus armor
     """
 
+    _defenseBonus = 0
+
+    @property
+    def defenseBonus(self):
+        """
+        The defense bonus of this piece of equipment
+        """
+        return self._defenseBonus
+
+    _powerBonus = 0
+
+    @property
+    def powerBonus(self):
+        """
+        The power bonus of this piece of equipment
+        """
+        return self._powerBonus
+
+    #constructor
+    def __init__(self, item_data):
+        """
+        Creates a new uninitialized Equipment object.
+        Use ItemLibrary.createItem() to create an initialized Item.
+        """
+        #call super class constructor
+        super(Equipment, self).__init__(item_data)
+        #Initialize equipment properties
+        self._defenseBonus = item_data['defense_bonus']
+        self._powerBonus = item_data['power_bonus']
 
 class Consumable(Item):
     """
-    Sub class for items that can be used.
+    Sub class for items that can be used and consumed.
     Not sure we might want a different class for scrolls and potions
     """
+
+    #constructor
+    def __init__(self, item_data):
+        """
+        Creates a new uninitialized Consumable object.
+        Use ItemLibrary.createItem() to create an initialized Item.
+        """
+        #call super class constructor
+        super(Consumable, self).__init__(item_data)
 
 
 class QuestItem(Item):

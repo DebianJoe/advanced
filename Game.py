@@ -138,6 +138,15 @@ class Game():
         """
         return self._monsterLibrary
 
+    _itemLibrary = None
+
+    @property
+    def itemLibrary(self):
+        """
+        Returns the item library used by this game.
+        """
+        return self._itemLibrary
+
     #constructor
     def __init__(self, owner):
         """
@@ -153,8 +162,9 @@ class Game():
 
     #functions
     def resetGame(self):
-        #initialize monster library
+        #initialize libraries
         self._monsterLibrary = MonsterLibrary()
+        self._itemLibrary = ItemLibrary()
 
         #clear existing levels
         self._levels = []
@@ -190,6 +200,11 @@ class Game():
         self.player.moveToLevel(firstLevel, firstLevel.getRandomEmptyTile())
         firstLevel.map.updateFieldOfView(
                 self._player.tile.x, self._player.tile.y)
+        #Provide some starting gear
+        potion = self.itemLibrary.createItem("heal");
+        self.player.addItem(potion)
+        cloak = self.itemLibrary.createItem("cloak");
+        self.player.addItem(cloak)
 
         #Set the game state
         self._state = Game.PLAYING

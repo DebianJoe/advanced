@@ -163,6 +163,8 @@ class DungeonLevel(Level):
         self._map = DungeonMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         #add some monsters
         self._placeMonsters()
+        #add some items
+        self._placeItems()
 
     def _placeMonsters(self):
         """
@@ -178,7 +180,7 @@ class DungeonLevel(Level):
         for room in self.map.rooms:
             #choose random number of monsters to create
             num_monsters = random.randrange(0, max_monsters)
-            for i in range(num_monsters):
+            for i in range(num_monsters + 1):
                 #choose random spot for new monster
                 x = random.randrange(room.x1 + 1, room.x2 - 1)
                 y = random.randrange(room.y1 + 1, room.y2 - 1)
@@ -190,6 +192,33 @@ class DungeonLevel(Level):
                     # get a random monster
                     new_monster = lib.getRandomMonster(self.difficulty)
                     new_monster.moveToLevel(self, target_tile)
+
+    def _placeItems(self):
+        """
+        This function will place items on this level depending on the
+        difficulty level and using the ItemLibrary in the Game
+        """
+        #Grab the ItemLibrary
+        lib = self.game.itemLibrary
+        #max number of items per room
+        max_items = lib.getMaxItemsPerRoomForDifficulty(self.difficulty)
+
+        #generate items for every room
+        for room in self.map.rooms:
+            #choose random number of items to create
+            num_items = random.randrange(0, max_items)
+            for i in range(num_items + 1):
+                #choose random spot for new item
+                x = random.randrange(room.x1 + 1, room.x2 - 1)
+                y = random.randrange(room.y1 + 1, room.y2 - 1)
+                target_tile = self.map.tiles[x][y]
+
+                #only place it if the tile is not blocked and empty
+                if not target_tile.blocked and target_tile.empty:
+
+                    # get a random item
+                    new_item = lib.getRandomItem(self.difficulty)
+                    new_item.moveToLevel(self, target_tile)
 
 
 class TownLevel(Level):

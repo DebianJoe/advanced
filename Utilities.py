@@ -51,13 +51,18 @@ def random_choice_index(chances):
         choice += 1
 
 
-def random_choice(chances_dict):
+def random_choice(chances_dict, difficulty):
     #choose one option from dictionary of chances, returning its key
-    chances = chances_dict.values()
+    chances = []
+    #TODO: implementation is not efficient, would be better to fill a kind of
+    #chance table once and reference later whenever a random choice is required.
+    for chance_table in chances_dict.values():
+        chance = from_dungeon_level(chance_table, difficulty)
+        chances.append(chance)
+
     strings = chances_dict.keys()
 
     return strings[random_choice_index(chances)]
-
 
 def from_dungeon_level(table, dungeon_level):
     #returns a value that depends on level. the table specifies

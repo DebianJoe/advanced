@@ -8,6 +8,7 @@ import json
 import random
 import ConfigParser
 import AI
+import Actors
 
 red = "\033[1;31m"
 green = "\033[1;32m"
@@ -82,6 +83,9 @@ def has_attrib(target, dic, key):
         except AttributeError:
             has_errors = True
             print(yellow + '\t\t"' + dic[key] + '" not a valid function or class' + reset)
+    else:
+        has_errors = True
+
 
 def is_list(dic, key):
     """
@@ -134,6 +138,7 @@ if __name__ == '__main__':
     #is_list(lists, 'monster list')
     is_list_of_list(lists, 'max monsters')
     #is_list(lists, 'item list')
+    is_list_of_list(lists, 'max items')
 
     #check monsters section
     print('Checking monsters section')
@@ -158,7 +163,15 @@ if __name__ == '__main__':
         print('* testing %s...' % item_name)
 
         # TEST ITEM HERE
+        has_attrib(Actors, item, 'type')
+        is_string(item, 'char')
+        is_string(item, 'name')
         is_list_of_list(item, 'chance')
+
+        # Equipment specific
+        if item['type'] == 'Equipment':
+            is_numeric(item, 'defense_bonus')
+            is_numeric(item, 'power_bonus')
 
     if has_errors:
         print(red + '\nUnit test failed :(' + reset)

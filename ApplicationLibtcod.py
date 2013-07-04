@@ -10,10 +10,12 @@ import libtcodpy as libtcod
 from Game import Game
 from Game import Player
 import Actors
+import Libraries
 import Maps
 import CONSTANTS
 import Utilities
 import textwrap
+
 
 #actual size of the window
 SCREEN_WIDTH = 85
@@ -358,6 +360,18 @@ class ApplicationLibtcod():
         libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
         libtcod.console_flush()
 
+    def showInventory(self):
+        if self.game is not None and self.game.player is not None:
+            header = "Inventory"
+            width = 45
+            options = []
+            items = self.game.player.allItems
+            for item in items:
+                options.append(item.name)
+            selection = self.showMenu(header, options, width)
+            if selection is not None:
+                self.game.player.tryUseItem(items[selection])
+
     ##########################################################################
     # DebugScreen functions
     ##########################################################################
@@ -375,8 +389,19 @@ class ApplicationLibtcod():
         #myRat.attack(myRandom)
         #myRat.attack(myRandom)
 
-        myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
-        print myMap
+        lib = Libraries.ItemLibrary()
+        myItem = lib.createItem('heal')
+        print myItem
+        myItem = lib.createItem('sword')
+        print myItem
+        myItem = lib.createItem('cloak')
+        print myItem
+        myItem = lib.createItem('fireball')
+        print myItem
+
+
+        #myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        #print myMap
 
     ##########################################################################
     # GameScreen functions
@@ -559,6 +584,12 @@ class ApplicationLibtcod():
                 player.tryFollowPortalDown()
             elif key_char == '<':
                 player.tryFollowPortalUp()
+            #inventory
+            elif key_char == 'i':
+                self.showInventory()
+            #interact
+            elif key_char == ',':
+                player.tryPickUp()
             # update field of vision
             self.game.currentLevel.map.updateFieldOfView(
                 player.tile.x, player.tile.y)
