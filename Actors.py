@@ -5,7 +5,7 @@
 import random
 import Utilities
 import CONSTANTS
-
+import Effects
 
 ##########
 # ACTORS #
@@ -122,12 +122,10 @@ class Actor(object):
         """
         This actor is in view of the player.
         """
-
         return self._inView
 
     @inView.setter
     def inView(self, visible):
-
         self._inView = visible
 
     #Constructor
@@ -175,8 +173,19 @@ class Actor(object):
         """
         moves this actor to the targetTile on the targetLevel
         """
-        self.moveToTile(targetTile)
         self.level = targetLevel
+        self.moveToTile(targetTile)
+
+    def removeFromLevel(self):
+        """
+        This method removes this actor from the level
+        """
+        if self.tile is not None:
+            self.tile.removeActor(self)
+        self._tile = None
+        if self.level is not None:
+            self.level.removeActor(self)
+        self._level = None
 
     def moveAlongVector(self, vx, vy):
         """
@@ -381,15 +390,43 @@ class Character(Actor):
         self.inventoryItems.append(item)
         #TODO: check for auto equip
 
+    def removeItem(self, item):
+        """
+        removes the item from the characters inventory
+        """
+        if item in self.equipedItems:
+            #unequip the item
+            self.unEquipItem(item)
+        self.inventoryItems.remove(item)
+
+    def equipItem(self, item):
+        """
+        basic implementation of equiping, doesn't take into account
+        equipment slots. Should be overridden in subclass implementations.
+        """
+        #can only equip if item is in inventory
+        if item in self.inventoryItems:
+            #can only equip if not yet equiped
+            if item not in self.equipedItems:
+                self.equipedItems.append(item)
+
+    def unEquipItem(self, item):
+        """
+        basic implementation of equiping, doesn't take into account
+        equipment slots. Should be overridden in subclass implementations.
+        """
+        #can only unequip if item is equiped
+        if item in self.equipedItems:
+            self.equipedItems.remove(item)
+
     def pickUpItem(self, item):
         """
         Make this character pick up an item.
         Arguments
             item - the item to be picked up
         """
-        #remove the item from its tile
-        if item.tile is not None:
-            item.tile.removeActor(item)
+        #remove the item from its tile and level
+        item.removeFromLevel()
         #add the item to the inventory of this character
         self.addItem(item)
         #message
@@ -398,19 +435,18 @@ class Character(Actor):
 
     def dropItem(self, item):
         """
-        Make this character drop an item.
+        Make this character drop an item on the current tile.
         Arguments
             item - the item to be dropped
         """
-        raise Utilities.GameError("character.dropItem() misses implementation")
-        #find the item in the characters inventory
-        #if the item is found
-        #remove it from the characters invetory
+        #unequip it if required
+        if item in self.equipedItems:
+            self.unEquipItem(item)
+        #if it is in the inventory remove it
+        if item in self.inventoryItems:
+            self.inventoryItems.remove(item)
         #add it to the current tile of the character
-        self.inventoryItems.remove(item)
-        self.equipedItems.remove(item)
-        #add the item to the inventory of this character
-        self.tile.addActor(item)
+        item.moveToLevel(self.level, self.tile)
         #message
         Utilities.message(self.name.capitalize() + ' drops a '
                     + item.name + '.', "GAME")
@@ -465,17 +501,19 @@ class Character(Actor):
         self._name = 'remains of ' + self.name
         self._state = Character.DEAD
 
-    def takeHeal(self, amount, attacker):
+    def takeHeal(self, amount, healer):
         """
         function to heal a given amount of hitpoints
         arguments
            amount - the number of hitpoints to heal
+           healer - the source of teh healing
         """
         #heal by the given amount
         if amount > 0:
             self.currentHitPoints += amount
             Utilities.message(self.name.capitalize() + ' gains '
-                    + str(amount) + ' hitpoints.', "GAME")
+                    + str(amount) + ' hitpoints from a ' +  healer.name
+                    + '.', "GAME")
 
     def takeTurn(self):
         """
@@ -629,9 +667,20 @@ class Player(Character):
         Player attempts to use an item.
         This function is meant to be called from the GUI.
         """
-        print 'trying to use a ' + item.name
-        #TODO
-        print 'IMPLEMENTATION MISSING'
+        if isinstance(item, Consumable):
+            #try to use the consumable
+            if item.effect is not None and item.isConsumed is False:
+                if item.effect.targetType == Effects.Effect.SELF:
+                    item.applyTo(self)
+            #remove the item it is used up
+            if item.isConsumed == True:
+                self.removeItem(item)
+
+        elif isinstance(item, Equipment):
+            pass
+            #try to equip
+        else:
+            raise Utilities.GameError("Missing implementation to use item")
 
 
 class NPC(Character):
@@ -749,8 +798,25 @@ class Equipment(Item):
 class Consumable(Item):
     """
     Sub class for items that can be used and consumed.
-    Not sure we might want a different class for scrolls and potions
     """
+
+    _effect = None
+
+    @property
+    def effect(self):
+        """
+        The effect that this consumable can generate.
+        """
+        return self._effect
+
+    _consumed = False
+
+    @property
+    def isConsumed(self):
+        """
+        Boolean indicating if this consumable has been consumed.
+        """
+        return self._consumed
 
     #constructor
     def __init__(self, item_data):
@@ -760,6 +826,29 @@ class Consumable(Item):
         """
         #call super class constructor
         super(Consumable, self).__init__(item_data)
+        #consumables usually have an effect
+        if item_data['effect'] != '':
+            effect_class = eval("Effects." + item_data['effect'])
+            newEffect = effect_class and effect_class(self) or None
+            newEffect._effectHitDie = item_data['effecthitdie']
+            self._effect = newEffect
+            self._consumed = False
+        else:
+            self._effect = None
+            self._consumed = True
+
+    #functions
+    def applyTo(self, target):
+        """
+        Applies the effect of this consumable to a target.
+        The target can be several types of object, it depends on the
+        specific Effect subclass.
+        """
+        #consumable can be used only once.
+        if self._consumed is False:
+            self.effect.applyTo(target)
+            self._consumed = True
+            self._effect = None
 
 
 class QuestItem(Item):

@@ -9,6 +9,7 @@ import random
 import ConfigParser
 import AI
 import Actors
+import Effects
 
 red = "\033[1;31m"
 green = "\033[1;32m"
@@ -172,6 +173,11 @@ if __name__ == '__main__':
         if item['type'] == 'Equipment':
             is_numeric(item, 'defense_bonus')
             is_numeric(item, 'power_bonus')
+
+        # Consumable specific
+        if item['type'] == 'Consumable':
+            has_attrib(Effects, item, 'effect')
+            is_hitdie(item, 'effecthitdie')
 
     if has_errors:
         print(red + '\nUnit test failed :(' + reset)

@@ -197,11 +197,18 @@ class Game():
         #Create player object
         self._player = Player()
         firstLevel = self.levels[0]
+        #uncomment to start in dungeon
+        #firstLevel = self.levels[1]
+        #self._currentLevel = firstLevel
         self.player.moveToLevel(firstLevel, firstLevel.getRandomEmptyTile())
         firstLevel.map.updateFieldOfView(
                 self._player.tile.x, self._player.tile.y)
         #Provide some starting gear
-        potion = self.itemLibrary.createItem("heal");
+        potion = self.itemLibrary.createItem("minor_heal");
+        self.player.addItem(potion)
+        potion = self.itemLibrary.createItem("regular_heal");
+        self.player.addItem(potion)
+        potion = self.itemLibrary.createItem("major_heal");
         self.player.addItem(potion)
         cloak = self.itemLibrary.createItem("cloak");
         self.player.addItem(cloak)

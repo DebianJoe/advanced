@@ -10,7 +10,7 @@ import CONSTANTS
 
 
 # rolling a hitdie
-def roll_hit_die(hitdie):
+def rollHitDie(hitdie):
     """
     this function simulates rolling hit dies and returns the resulting
     nbr of hitpoints. Hit dies are specified in the format xdy where

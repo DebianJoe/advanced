@@ -360,9 +360,9 @@ class ApplicationLibtcod():
         libtcod.console_blit(behind_window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
         libtcod.console_flush()
 
-    def showInventory(self):
+    def useInventory(self):
         if self.game is not None and self.game.player is not None:
-            header = "Inventory"
+            header = "Select item to use, escape to cancel"
             width = 45
             options = []
             items = self.game.player.allItems
@@ -371,6 +371,18 @@ class ApplicationLibtcod():
             selection = self.showMenu(header, options, width)
             if selection is not None:
                 self.game.player.tryUseItem(items[selection])
+
+    def dropInventory(self):
+        if self.game is not None and self.game.player is not None:
+            header = "Select item to drop, escape to cancel"
+            width = 45
+            options = []
+            items = self.game.player.allItems
+            for item in items:
+                options.append(item.name)
+            selection = self.showMenu(header, options, width)
+            if selection is not None:
+                self.game.player.dropItem(items[selection])
 
     ##########################################################################
     # DebugScreen functions
@@ -447,7 +459,7 @@ class ApplicationLibtcod():
             # draw any actors standing on this tile.
             # includes Monsters and Portals
             for myActor in tile.actors:
-                if myActor.visible:
+                if myActor.inView:
                     actor_color = libtcod.white
                     # NOTE if the Actor base stores it's own color there is no
                     # need for type checking.
@@ -586,7 +598,9 @@ class ApplicationLibtcod():
                 player.tryFollowPortalUp()
             #inventory
             elif key_char == 'i':
-                self.showInventory()
+                self.useInventory()
+            elif key_char == 'd':
+                self.dropInventory()
             #interact
             elif key_char == ',':
                 player.tryPickUp()

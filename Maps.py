@@ -155,7 +155,7 @@ class Map(object):
                 self.tiles[tx][ty].inView = False
             # set all actors as in view too
             for actor in tile.actors:
-                actor.visible = visible and line_of_sight
+                actor.inView = visible and line_of_sight
 
     def getRandomEmptyTile(self):
         """

@@ -122,7 +122,7 @@ class MonsterLibrary(Library):
         newMonster._id = monster_key
         newMonster._char = monster_data['char']
         newMonster._baseMaxHitPoints = \
-                Utilities.roll_hit_die(monster_data['hitdie'])
+                Utilities.rollHitDie(monster_data['hitdie'])
         newMonster._currentHitPoints = newMonster._baseMaxHitPoints
         newMonster._name = monster_data['name']
         #Character components
