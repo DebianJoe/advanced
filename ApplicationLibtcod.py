@@ -15,6 +15,8 @@ import Maps
 import CONSTANTS
 import Utilities
 import textwrap
+import random
+import timeit
 
 
 #actual size of the window
@@ -392,24 +394,33 @@ class ApplicationLibtcod():
         This function ties into the debug menu. It is meant to allow execution
         of some test code. Feel free to change the contents of this function.
         """
-        #lib = MonsterLibrary()
-        #myRandom = lib.getRandomMonster(2)
-        #myRat = lib.createMonster('rat')
-        #print myRat
-        #print myRandom
-        #myRat.attack(myRandom)
-        #myRat.attack(myRandom)
-        #myRat.attack(myRandom)
+        start = timeit.default_timer()
 
-        lib = Libraries.ItemLibrary()
-        myItem = lib.createItem('heal')
-        print myItem
-        myItem = lib.createItem('sword')
-        print myItem
-        myItem = lib.createItem('cloak')
-        print myItem
-        myItem = lib.createItem('fireball')
-        print myItem
+        monsters = []
+        lib = Libraries.MonsterLibrary()
+
+        stop = timeit.default_timer()
+        time = stop - start
+        print 'Created library in ' + str(time) + ' seconds'
+
+        for i in range(0, 10000):
+            myRandom = lib.getRandomMonster(random.randint(0,80))
+            monsters.append(myRandom)
+
+
+        #lib = Libraries.ItemLibrary()
+        #myItem = lib.createItem('heal')
+        #print myItem
+        #myItem = lib.createItem('sword')
+        #print myItem
+        #myItem = lib.createItem('cloak')
+        #print myItem
+        #myItem = lib.createItem('fireball')
+        #print myItem
+
+        stop = timeit.default_timer()
+        time = stop - start
+        print 'Created ' +str(len(monsters)) + ' monsters in ' + str(time) + ' seconds'
 
 
         #myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
