@@ -28,6 +28,19 @@ def has_key(dic, key):
         print(yellow + '\t\t"' + key + '" is not defined' + reset)
         return False
 
+def is_char(dic, key):
+    """
+    Test if the key exists and represents a char.
+    """
+    global has_errors
+    if has_key(dic, key):
+        char = str(dic[key])
+        if len(char) > 1:
+            has_errors = True
+            print(yellow + '\t\t"' + char + '" is not a char' + reset)
+    else:
+        has_errors = True
+
 def is_string(dic, key):
     """
     Test if the key exists in dictionary.
@@ -124,6 +137,7 @@ def is_list_of_list(dic, key):
             has_errors = True
             print(yellow + '\t\t"' + key + '" invalid - ' + str(e) + reset)
 
+
 if __name__ == '__main__':
     config = ConfigParser.ConfigParser()
     try:
@@ -148,7 +162,7 @@ if __name__ == '__main__':
         print('* testing %s...' % monster_name)
 
         # TEST MONSTER HERE
-        is_string(monster, 'char')
+        is_char(monster, 'char')
         is_string(monster, 'name')
         is_list_of_list(monster, 'chance')
         is_list(monster, 'color')
@@ -165,7 +179,7 @@ if __name__ == '__main__':
 
         # TEST ITEM HERE
         has_attrib(Actors, item, 'type')
-        is_string(item, 'char')
+        is_char(item, 'char')
         is_string(item, 'name')
         is_list_of_list(item, 'chance')
 
