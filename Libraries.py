@@ -23,6 +23,12 @@ class Library(object):
     def configParser(self):
         return self._configParser
 
+    _chancesDictionary = {}
+
+    @property
+    def chancesDictionary(self):
+        return self._chancesDictionary
+
     #constructor
     def __init__(self, myConfigParser):
         """
@@ -33,6 +39,27 @@ class Library(object):
         #initialize class variables
         self._configParser = myConfigParser
 
+    def _initChancesDictionary(self,names_list):
+        """
+        utility function to grab the list of chances for each item only once.
+        """
+        self._chancesDictionary = {}
+        #Load the names in the dictionary
+        self._chancesDictionary["names"] = names_list
+        #for each name, load the chances per level
+        for myName in self._chancesDictionary["names"]:
+            chance_table = json.loads(self.configParser.get(myName, 'chance'))
+            self._chancesDictionary[myName] = chance_table
+
+    def _fromDungeonLevel(self, table, difficulty):
+        """
+        Utility function,returns a value that depends on the difficulty level.
+        """
+        #what value occurs after each level, default is 0.
+        for (value, level) in table:
+            if difficulty >= level:
+                return value
+        return 0
 
 class MonsterLibrary(Library):
     """
@@ -42,15 +69,6 @@ class MonsterLibrary(Library):
     """
 
     #class variables
-
-    _monsterChances = {}
-
-    @property
-    def monsterChances(self):
-        """
-        Returns the chance table for monster occurrences.
-        """
-        return self._monsterChances
 
     _uniqueMonsters = []
 
@@ -89,11 +107,8 @@ class MonsterLibrary(Library):
         #initialize class variables
         self._uniqueMonsters = []
         self._regularMonsters = []
-        self._monsterChances = {}
-        for monster_name in self.configParser.get('lists', 'monster list').split(', '):
-            chance_table = json.loads(self.configParser.get(monster_name, 'chance'))
-            self._monsterChances[monster_name] = chance_table
-
+        monsterList = self.configParser.get('lists', 'monster list').split(', ')
+        self._initChancesDictionary(monsterList)
 
 
     def createMonster(self, monster_key):
@@ -147,18 +162,30 @@ class MonsterLibrary(Library):
 
     def getMaxMonstersPerRoomForDifficulty(self, difficulty):
         #maximum number of monsters per room
-        max_monsters = Utilities.from_dungeon_level(
+        max_monsters = self._fromDungeonLevel(
                 json.loads(self.configParser.get('lists', 'max monsters')),
                 difficulty)
         return max_monsters
 
     def getRandomMonster(self, difficulty):
+        #Determine possibilities
+        possibilities = self.chancesDictionary["names"]
+
         #Avoid recreating unique monsters
         for unique_monster in self.uniqueMonsters:
-            del monster_chances[unique_monster.id]
+            del possibilities[unique_monster.id]
 
-        #create a random monster
-        choice = Utilities.random_choice(self.monsterChances, difficulty)
+        #Determine chances for every possibility
+        chances = []
+        for possi in possibilities:
+            chanceTable = self.chancesDictionary[possi]
+            chance = self._fromDungeonLevel(chanceTable, difficulty)
+            chances.append(chance)
+
+        #randomly select a possibility
+        choice = possibilities[Utilities.randomChoiceIndex(chances)]
+
+        #create the monster
         monster = self.createMonster(choice)
         return monster
 
@@ -168,15 +195,6 @@ class ItemLibrary(Library):
     This class represents a library of items. Logic to create items is
     implemented in this class.
     """
-
-    _itemChances = {}
-
-    @property
-    def itemChances(self):
-        """
-        Returns the chance table for item occurrences.
-        """
-        return self._itemChances
 
     _items = []
 
@@ -198,10 +216,8 @@ class ItemLibrary(Library):
         super(ItemLibrary, self).__init__(config)
         #initialize class variables
         self._items = []
-        self._itemChances = {}
-        for item_name in self.configParser.get('lists', 'item list').split(', '):
-            chance_table = json.loads(self.configParser.get(item_name, 'chance'))
-            self._itemChances[item_name] = chance_table
+        ItemList = self.configParser.get('lists', 'item list').split(', ')
+        self._initChancesDictionary(ItemList)
 
     def createItem(self, item_key):
         """
@@ -228,13 +244,25 @@ class ItemLibrary(Library):
 
     def getMaxItemsPerRoomForDifficulty(self, difficulty):
         #maximum number of items per room
-        max_items = Utilities.from_dungeon_level(
+        max_items = self._fromDungeonLevel(
                 json.loads(self.configParser.get('lists', 'max items')),
                 difficulty)
         return max_items
 
     def getRandomItem(self, difficulty):
-        #create a random item
-        choice = Utilities.random_choice(self.itemChances, difficulty)
+        #Determine possibilities
+        possibilities = self.chancesDictionary["names"]
+
+        #Determine chances for every possibility
+        chances = []
+        for possi in possibilities:
+            chanceTable = self.chancesDictionary[possi]
+            chance = self._fromDungeonLevel(chanceTable, difficulty)
+            chances.append(chance)
+
+        #randomly select a possibility
+        choice = possibilities[Utilities.randomChoiceIndex(chances)]
+
+        #create the item
         item = self.createItem(choice)
         return item

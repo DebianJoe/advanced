@@ -33,9 +33,10 @@ def rollHitDie(hitdie):
         hitpoints += random.randrange(1, dice_size)
     return hitpoints
 
-
-def random_choice_index(chances):
-    #choose one option from list of chances, returning its index
+def randomChoiceIndex(chances):
+    """
+    Returns the index of a random choice based on a list of chances.
+    """
     #the dice will land on some number between 1 and the sum of the chances
     dice = random.randrange(1, sum(chances))
 
@@ -49,29 +50,6 @@ def random_choice_index(chances):
         if dice <= running_sum:
             return choice
         choice += 1
-
-
-def random_choice(chances_dict, difficulty):
-    #choose one option from dictionary of chances, returning its key
-    chances = []
-    #TODO: implementation is not efficient, would be better to fill a kind of
-    #chance table once and reference later whenever a random choice is required.
-    for chance_table in chances_dict.values():
-        chance = from_dungeon_level(chance_table, difficulty)
-        chances.append(chance)
-
-    strings = chances_dict.keys()
-
-    return strings[random_choice_index(chances)]
-
-def from_dungeon_level(table, dungeon_level):
-    #returns a value that depends on level. the table specifies
-    #what value occurs after each level, default is 0.
-    for (value, level) in table:
-        if dungeon_level >= level:
-            return value
-    return 0
-
 
 # This property is used by the message function to send game messages
 # to the application where they can be shown.
