@@ -296,14 +296,6 @@ class Character(Actor):
         """
         return self._equipedItems
 
-    @property
-    def allItems(self):
-        """
-        Returns a list of all items in this characters possession.
-        Includes equiped and unequiped items.
-        """
-        return self._inventoryItems + self._equipedItems
-
     ACTIVE = 0
     DEAD = 1
     _state = ACTIVE
@@ -332,9 +324,8 @@ class Character(Actor):
         Return attack power
         """
         bonus = 0
-        #TODO
-        #include power bonuses of equipped items
-        #bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
+        for item in self.equipedItems:
+            bonus += int(item.powerBonus)
         return self._basePower + bonus
 
     _baseDefense = 0
@@ -345,9 +336,8 @@ class Character(Actor):
         Return defense value
         """
         bonus = 0
-        #TODO
-        #include defense bonuses of equipped items
-        #bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
+        for item in self.equipedItems:
+            bonus += int(item.defenseBonus)
         return self._baseDefense + bonus
 
     _AI = None
@@ -409,6 +399,9 @@ class Character(Actor):
             #can only equip if not yet equiped
             if item not in self.equipedItems:
                 self.equipedItems.append(item)
+                item.isEquiped = True
+                Utilities.message(self.name.capitalize() + ' equips a '
+                        + item.name + '.', "GAME")
 
     def unEquipItem(self, item):
         """
@@ -418,6 +411,9 @@ class Character(Actor):
         #can only unequip if item is equiped
         if item in self.equipedItems:
             self.equipedItems.remove(item)
+            item.isEquiped = False
+            Utilities.message(self.name.capitalize() + ' unequips a '
+                        + item.name + '.', "GAME")
 
     def pickUpItem(self, item):
         """
@@ -677,11 +673,25 @@ class Player(Character):
                 self.removeItem(item)
 
         elif isinstance(item, Equipment):
-            pass
-            #try to equip
+            if item.isEquiped:
+                #unequip the item
+                self.unEquipItem(item)
+            else:
+                #equip the item
+                self.equipItem(item)
         else:
             raise Utilities.GameError("Missing implementation to use item")
 
+    def tryDropItem(self, item):
+        """
+        Player attempts to drop an item.
+        This function is meant to be called from the GUI.
+        """
+        if isinstance(item, Equipment):
+            if item.isEquiped:
+                Utilities.message("You can't drop an equiped item.")
+                return
+        self.dropItem(item)
 
 class NPC(Character):
     """
@@ -783,6 +793,32 @@ class Equipment(Item):
         """
         return self._powerBonus
 
+    _isEquiped = False
+
+    @property
+    def isEquiped(self):
+        """
+        Boolean indicating if this piece of equipment is equiped.
+        """
+        return self._isEquiped
+
+    @isEquiped.setter
+    def isEquiped(self, status):
+        """
+        Sets the isEquiped status for this piece of equipment.
+        """
+        self._isEquiped = status
+
+    @property
+    def name(self):
+        """
+        Specialised version of name property.
+        """
+        suffix =''
+        if self.isEquiped:
+            suffix = ' (equiped)'
+        return super(Equipment, self).name + suffix
+
     #constructor
     def __init__(self, item_data):
         """
@@ -794,6 +830,7 @@ class Equipment(Item):
         #Initialize equipment properties
         self._defenseBonus = item_data['defense_bonus']
         self._powerBonus = item_data['power_bonus']
+        self._isEquiped = False
 
 class Consumable(Item):
     """

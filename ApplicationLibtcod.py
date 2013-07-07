@@ -367,7 +367,7 @@ class ApplicationLibtcod():
             header = "Select item to use, escape to cancel"
             width = 45
             options = []
-            items = self.game.player.allItems
+            items = self.game.player.inventoryItems
             for item in items:
                 options.append(item.name)
             selection = self.showMenu(header, options, width)
@@ -379,12 +379,12 @@ class ApplicationLibtcod():
             header = "Select item to drop, escape to cancel"
             width = 45
             options = []
-            items = self.game.player.allItems
+            items = self.game.player.inventoryItems
             for item in items:
                 options.append(item.name)
             selection = self.showMenu(header, options, width)
             if selection is not None:
-                self.game.player.dropItem(items[selection])
+                self.game.player.tryDropItem(items[selection])
 
     ##########################################################################
     # DebugScreen functions
