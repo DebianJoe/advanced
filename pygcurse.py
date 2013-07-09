@@ -1,3 +1,6 @@
+#!/usr/bin/python2.6
+# -*-coding:Latin-1 -*
+
 """
 Please forgive any typos or errors in the comments, I'll be cleaning them up as frequently as I can.
 
@@ -2447,6 +2450,10 @@ class PygcurseTextbox:
     size        = property(_propgetsize, _propsetsize)
 
 _shiftchars = {'`':'~', '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*', '9':'(', '0':')', '-':'_', '=':'+', '[':'{', ']':'}', '\\':'|', ';':':', "'":'"', ',':'<', '.':'>', '/':'?'}
+#Frost:
+#I have a different keyboard layout... I should uncomment the next line
+#and hopefully don't forget to comment it before checking in :-)
+#_shiftchars = {'&':'1', 'é':'2', '"':'3', "'":'4', '(':'5', '§':'6', 'è':'7', '!':'8', 'ç':'9', 'à':'0', ')':'°', '=':'+', ';':'.', '<':'>', ',':'?', ':':'/'}
 
 def interpretkeyevent(keyEvent):
     """Returns the character represented by the pygame.event.Event object in keyEvent. This makes adjustments for the shift key and capslock."""
