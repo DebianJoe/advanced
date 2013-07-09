@@ -118,9 +118,6 @@ class ApplicationPygcurse():
         self._messages = []
         Utilities.application = self
 
-        #Create a new game object for this application
-        #self._game = Game(self)
-
     def showMenu(self, header, options, width=20, height=10):
         """
         This function will show a menu. The application waits for user input
@@ -140,7 +137,7 @@ class ApplicationPygcurse():
             self.win.centery / 2 + (height / 2),
             width,
             height)
-        
+
         # a list from a-n, where n is the length of our options
         hotkeys = [chr(ord('a') + i) for i in range(0, len(options))]
 
@@ -150,7 +147,7 @@ class ApplicationPygcurse():
         for counter, option_text in enumerate(options):
             menu_choices.append('(%s) %s' % ((hotkeys[counter]), option_text))
         menu_choices = '\n'.join(menu_choices)
-        
+
         # construct the menu as a textbox object. It recognizes newlines.
         # this guy draw a nice border for us too.
         txt = pygcurse.PygcurseTextbox(
@@ -181,10 +178,10 @@ class ApplicationPygcurse():
         It waits for the user to acknowledge the message by hitting enter or
         escape
         """
-        
+
         # store the current window for easy restore when we are done
         self.win.push_surface()
-        
+
         # Show in the middle of the screen.
         menu_region = (
             self.win.centerx / 2,
@@ -218,13 +215,13 @@ class ApplicationPygcurse():
             elif key == '\r':
                 result = 'Enter'
                 break
-        
+
         # restore to original window
         self.win.pop_surface()
         return result
 
     def showWelcomeScreen(self):
-        
+
         self.win.backgroundimage = pygame.image.load(
             './media/menu_background.png')
         menu_choices = ['Start a new game',
@@ -256,9 +253,9 @@ class ApplicationPygcurse():
         #self.win.backgroundimage = None
 
     def showDebugScreen(self):
-        
+
         # note that the background image is still set from the welcome screen
-        
+
         #store the current view
         self.win.push_surface()
 
@@ -283,7 +280,7 @@ class ApplicationPygcurse():
         self.win.pop_surface()
 
     def showGameScreen(self):
-
+        #create a new window surface on top of whatever is currently shown
         self.win.push_surface()
         while True:
             self.renderAll()
@@ -294,6 +291,7 @@ class ApplicationPygcurse():
 
             #Let the game play a turn
             self.game.playTurn()
+        #go back to the underlying window surface
         self.win.pop_surface()
 
     ##########################################################################
@@ -333,9 +331,6 @@ class ApplicationPygcurse():
         """
         This function renders the main screen
         """
-
-        self.DEBUG_COUNT += 1
-        print('turn %s' % self.DEBUG_COUNT)
         level = self.game.currentLevel
         for tile in level.map.explored_tiles:
             if tile.blocked:
@@ -369,7 +364,7 @@ class ApplicationPygcurse():
 
             #Redraw player character (makes sure it is on top)
             player = self.game.player
-            
+
             self.win.putchar(
                 player.char, player.tile.x, player.tile.y, fgcolor=colors.white)
 
@@ -400,7 +395,7 @@ class ApplicationPygcurse():
             self.win.putchars(str(self.game.currentLevel.name), 1, 3)
 
         self.win.update()
-        
+
         #TODO: display names of objects under the mouse
         # Frost: this would require running this loop constantly which is not
         # happening at the moment. Currently it pauses to wait for the player to
@@ -465,7 +460,7 @@ class ApplicationPygcurse():
 
         if self.game.state == Game.PLAYING:
             player = self.game.player
-            
+            print 'pressed ' + str(key)
             # movement
             if key in movement_keys:
                 # the * here is Python syntax to unpack a list.
