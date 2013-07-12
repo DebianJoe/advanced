@@ -153,6 +153,12 @@ class ApplicationPygcurse():
 
         # construct the menu as a textbox object. It recognizes newlines.
         # this guy draw a nice border for us too.
+        
+        #TODO: Frost: there is a problem here
+        # the menu_region might be too small to contain all the menu items.
+        # The height has to be calculated based on the number of menu items.
+        # I think the showMessage function suffers from the same problem
+        # (if you give it a really long text) 
         txt = pygcurse.PygcurseTextbox(
             self.win,
             region=menu_region,
@@ -345,9 +351,10 @@ class ApplicationPygcurse():
         #myRat.attack(myRandom)
         #myRat.attack(myRandom)
 
-        myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
-        print myMap
-
+        #myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        #print myMap
+        text = "this is a very long and useless text.this is a very long and useless text."
+        self.showMessage("long test message", text)
     ##########################################################################
     # GameScreen functions
     ##########################################################################
