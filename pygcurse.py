@@ -2449,26 +2449,27 @@ class PygcurseTextbox:
     pixelsize   = property(_propgetsize, _propsetsize)
     size        = property(_propgetsize, _propsetsize)
 
-_shiftchars = {'`':'~', '1':'!', '2':'@', '3':'#', '4':'$', '5':'%', '6':'^', '7':'&', '8':'*', '9':'(', '0':')', '-':'_', '=':'+', '[':'{', ']':'}', '\\':'|', ';':':', "'":'"', ',':'<', '.':'>', '/':'?'}
-#Frost:
-#I have a different keyboard layout... I should uncomment the next line
-#and hopefully don't forget to comment it before checking in :-)
-#_shiftchars = {'&':'1', 'é':'2', '"':'3', "'":'4', '(':'5', '§':'6', 'è':'7', '!':'8', 'ç':'9', 'à':'0', ')':'°', '=':'+', ';':'.', '<':'>', ',':'?', ':':'/'}
-
 def interpretkeyevent(keyEvent):
-    """Returns the character represented by the pygame.event.Event object in keyEvent. This makes adjustments for the shift key and capslock."""
-    key = keyEvent.key
-    if (key >= 32 and key < 127) or key in (ord('\n'), ord('\r'), ord('\t')):
-        caps = bool(keyEvent.mod & KMOD_CAPS)
-        shift = bool(keyEvent.mod & KMOD_LSHIFT or keyEvent.mod & KMOD_RSHIFT)
-        char = chr(key)
-        if char.isalpha() and (caps ^ shift):
-            char = char.upper()
-        elif shift and char in _shiftchars:
-            char = _shiftchars[char]
-        return char
-    return None # None means that there is no printable character corresponding to this keyEvent
-
+    """
+    Returns the character represented by the given KEYDOWN event.
+    
+    'enter' refers to the keypad specifically, and 'return' the large button.
+    
+    """
+    
+    special_chars = ('f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 
+    'f10', 'f11', 'f12', '`', 'tab', 'caps lock', 'left shift', 'left ctrl', 
+    'left super', 'left alt', 'right alt', 'right super', 'right ctrl', 
+    'right shift', 'return', 'backspace', 'up', 'down', 'left', 'right', 
+    'insert', 'home', 'page up', 'delete', 'end', 'page down', '[/]', '[*]', 
+    '[-]', '[7]', '[8]', '[9]', '[4]', '[5]', '[6]', '[1]', '[2]', '[3]', 
+    '[0]', '[.]', '[+]', 'enter', 'escape',
+    )
+    key_name = pygame.key.name(keyEvent.key)
+    if key_name in special_chars:
+        return key_name
+    else:
+        return keyEvent.unicode
 
 def spitintogroupsof(groupSize, theList):
     # splits a sequence into a list of sequences, where the inner lists have at
@@ -2539,7 +2540,7 @@ def getpygamecolor(value):
         return pygame.Color(*color)
     return color
 
-def waitforkeypress(fps=None, handle_special_keys=False):
+def waitforkeypress(fps=None):
     # Go through event queue looking for a KEYUP event.
     # Grab KEYDOWN events to remove them from the event queue.
     # handle_special_keys will return a name of the key
@@ -2556,14 +2557,7 @@ def waitforkeypress(fps=None, handle_special_keys=False):
                 pygame.quit()
                 sys.exit()
             elif event.type == KEYDOWN:
-                key_char = interpretkeyevent(event)
-                if key_char is None and handle_special_keys:
-                    try:
-                        return pygame.key.name(event.key)
-                    except:
-                        return None
-                else:
-                    return key_char
+                return interpretkeyevent(event)
         pygame.display.update()
         if fps is not None:
             clock.tick(fps)

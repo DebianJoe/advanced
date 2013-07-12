@@ -166,7 +166,7 @@ class ApplicationPygcurse():
         self.win.update()
         menu_busy = True
         while menu_busy:
-            key = pygcurse.waitforkeypress(LIMIT_FPS, True)
+            key = pygcurse.waitforkeypress(LIMIT_FPS)
             if key is None:
                 return None
             if key in hotkeys:
@@ -209,10 +209,11 @@ class ApplicationPygcurse():
         result = ''
         while menu_busy:
             key = pygcurse.waitforkeypress(LIMIT_FPS)
-            if key is None:
+            print(key)
+            if key == 'escape':
                 result = 'Escape'
                 break
-            elif key == '\r':
+            elif key in ('enter', 'return'):
                 result = 'Enter'
                 break
 
@@ -425,7 +426,7 @@ class ApplicationPygcurse():
         Handle any keyboard presses.
         """
 
-        key = pygcurse.waitforkeypress(LIMIT_FPS, True)
+        key = pygcurse.waitforkeypress(LIMIT_FPS)
         if key == 'escape':
             return 'exit'
 
