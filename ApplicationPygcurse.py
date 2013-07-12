@@ -494,7 +494,7 @@ class ApplicationPygcurse():
 
         if self.game.state == Game.PLAYING:
             player = self.game.player
-            print 'pressed ' + str(key)
+
             # movement
             if key in movement_keys:
                 # the * here is Python syntax to unpack a list.
