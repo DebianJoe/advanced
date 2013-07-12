@@ -34,7 +34,7 @@ MESSAGE_PANEL_REGION = (BAR_WIDTH + 2,
                         PANEL_HEIGHT)
 
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
-MSG_HEIGHT = PANEL_HEIGHT - 1
+MSG_HEIGHT = PANEL_HEIGHT - 2
 
 # draw the dungeon with these colors.
 # dark tiles are out of the player's view.
@@ -426,7 +426,7 @@ class ApplicationPygcurse():
                     colors.darker_green, colors.darker_gray)
         if self.game.currentLevel is not None:
             #Dungeon level
-            self.win.putchars(str(self.game.currentLevel.name), 1, 3)
+            self.win.putchars(str(self.game.currentLevel.name), 2, 2)
 
         self.win.update()
 
