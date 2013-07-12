@@ -34,7 +34,7 @@ MESSAGE_PANEL_REGION = (BAR_WIDTH + 2,
                         PANEL_HEIGHT)
 
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
-MSG_HEIGHT = PANEL_HEIGHT - 1
+MSG_HEIGHT = PANEL_HEIGHT - 2
 
 # draw the dungeon with these colors.
 # dark tiles are out of the player's view.
@@ -131,6 +131,9 @@ class ApplicationPygcurse():
         if len(options) > 26:
             raise ValueError('Cannot have a menu with more than 26 options.')
 
+        #store the current view
+        self.win.push_surface()
+
         # Show in the middle of the screen.
         menu_region = (
             self.win.centerx / 2,
@@ -150,6 +153,12 @@ class ApplicationPygcurse():
 
         # construct the menu as a textbox object. It recognizes newlines.
         # this guy draw a nice border for us too.
+        
+        #TODO: Frost: there is a problem here
+        # the menu_region might be too small to contain all the menu items.
+        # The height has to be calculated based on the number of menu items.
+        # I think the showMessage function suffers from the same problem
+        # (if you give it a really long text) 
         txt = pygcurse.PygcurseTextbox(
             self.win,
             region=menu_region,
@@ -167,11 +176,18 @@ class ApplicationPygcurse():
         menu_busy = True
         while menu_busy:
             key = pygcurse.waitforkeypress(LIMIT_FPS)
-            if key is None:
-                return None
+            if key is None or key == 'escape':
+                return_value = None
+                break
             if key in hotkeys:
-                return hotkeys.index(key)
+                return_value = hotkeys.index(key)
+                break
 
+        #go back to the previous view
+        self.win.pop_surface()
+        
+        return return_value
+        
     def showMessage(self, header, message, width=20, height=10):
         """
         This function will show a pop up message in the middle of the screen.
@@ -295,6 +311,30 @@ class ApplicationPygcurse():
         #go back to the underlying window surface
         self.win.pop_surface()
 
+    def useInventory(self):
+        if self.game is not None and self.game.player is not None:
+            header = "Select item to use, escape to cancel"
+            width = 45
+            options = []
+            items = self.game.player.inventoryItems
+            for item in items:
+                options.append(item.name)
+            selection = self.showMenu(header, options, width)
+            if selection is not None:
+                self.game.player.tryUseItem(items[selection])
+
+    def dropInventory(self):
+        if self.game is not None and self.game.player is not None:
+            header = "Select item to drop, escape to cancel"
+            width = 45
+            options = []
+            items = self.game.player.inventoryItems
+            for item in items:
+                options.append(item.name)
+            selection = self.showMenu(header, options, width)
+            if selection is not None:
+                self.game.player.tryDropItem(items[selection])
+                
     ##########################################################################
     # DebugScreen functions
     ##########################################################################
@@ -312,9 +352,10 @@ class ApplicationPygcurse():
         #myRat.attack(myRandom)
         #myRat.attack(myRandom)
 
-        myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
-        print myMap
-
+        #myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
+        #print myMap
+        text = "this is a very long and useless text.this is a very long and useless text."
+        self.showMessage("long test message", text)
     ##########################################################################
     # GameScreen functions
     ##########################################################################
@@ -353,7 +394,7 @@ class ApplicationPygcurse():
             # draw any actors standing on this tile.
             # includes Monsters and Portals
             for myActor in tile.actors:
-                if myActor.visible:
+                if myActor.inView:
                     actor_color = colors.white
                     # NOTE if the Actor base stores it's own color there is no
                     # need for type checking.
@@ -393,7 +434,7 @@ class ApplicationPygcurse():
                     colors.darker_green, colors.darker_gray)
         if self.game.currentLevel is not None:
             #Dungeon level
-            self.win.putchars(str(self.game.currentLevel.name), 1, 3)
+            self.win.putchars(str(self.game.currentLevel.name), 2, 2)
 
         self.win.update()
 
@@ -461,7 +502,7 @@ class ApplicationPygcurse():
 
         if self.game.state == Game.PLAYING:
             player = self.game.player
-            print 'pressed ' + str(key)
+
             # movement
             if key in movement_keys:
                 # the * here is Python syntax to unpack a list.
@@ -478,7 +519,15 @@ class ApplicationPygcurse():
                 player.tryFollowPortalUp()
                 # clear characters
                 self.win.setscreencolors(clear=True)
-
+            #inventory
+            elif key == 'i':
+                self.useInventory()
+            elif key == 'd':
+                self.dropInventory()
+            #interact
+            elif key == ',':
+                player.tryPickUp()
+                
             # update field of vision
             self.game.currentLevel.map.updateFieldOfView(
                 player.tile.x, player.tile.y)
