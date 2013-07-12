@@ -131,6 +131,9 @@ class ApplicationPygcurse():
         if len(options) > 26:
             raise ValueError('Cannot have a menu with more than 26 options.')
 
+        #store the current view
+        self.win.push_surface()
+
         # Show in the middle of the screen.
         menu_region = (
             self.win.centerx / 2,
@@ -167,11 +170,18 @@ class ApplicationPygcurse():
         menu_busy = True
         while menu_busy:
             key = pygcurse.waitforkeypress(LIMIT_FPS, True)
-            if key is None:
-                return None
+            if key == 'escape':
+                return_value = None
+                break
             if key in hotkeys:
-                return hotkeys.index(key)
+                return_value = hotkeys.index(key)
+                break
 
+        #go back to the previous view
+        self.win.pop_surface()
+        
+        return return_value
+        
     def showMessage(self, header, message, width=20, height=10):
         """
         This function will show a pop up message in the middle of the screen.
@@ -294,6 +304,30 @@ class ApplicationPygcurse():
         #go back to the underlying window surface
         self.win.pop_surface()
 
+    def useInventory(self):
+        if self.game is not None and self.game.player is not None:
+            header = "Select item to use, escape to cancel"
+            width = 45
+            options = []
+            items = self.game.player.inventoryItems
+            for item in items:
+                options.append(item.name)
+            selection = self.showMenu(header, options, width)
+            if selection is not None:
+                self.game.player.tryUseItem(items[selection])
+
+    def dropInventory(self):
+        if self.game is not None and self.game.player is not None:
+            header = "Select item to drop, escape to cancel"
+            width = 45
+            options = []
+            items = self.game.player.inventoryItems
+            for item in items:
+                options.append(item.name)
+            selection = self.showMenu(header, options, width)
+            if selection is not None:
+                self.game.player.tryDropItem(items[selection])
+                
     ##########################################################################
     # DebugScreen functions
     ##########################################################################
@@ -352,7 +386,7 @@ class ApplicationPygcurse():
             # draw any actors standing on this tile.
             # includes Monsters and Portals
             for myActor in tile.actors:
-                if myActor.visible:
+                if myActor.inView:
                     actor_color = colors.white
                     # NOTE if the Actor base stores it's own color there is no
                     # need for type checking.
@@ -477,7 +511,15 @@ class ApplicationPygcurse():
                 player.tryFollowPortalUp()
                 # clear characters
                 self.win.setscreencolors(clear=True)
-
+            #inventory
+            elif key == 'i':
+                self.useInventory()
+            elif key == 'd':
+                self.dropInventory()
+            #interact
+            elif key == ',':
+                player.tryPickUp()
+                
             # update field of vision
             self.game.currentLevel.map.updateFieldOfView(
                 player.tile.x, player.tile.y)
