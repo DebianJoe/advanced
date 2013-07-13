@@ -730,7 +730,9 @@ def pygprint(self, obj='', *objs, sep=' ', end='\n', fgcolor=None, bgcolor=None,
         - bgcolor is the color to set the background to.
         """
         if region == None:
-            self._fgcolor = fgcolor
+            #Frost: another bug in vanilla pygcurse, replaced one line of code
+            #self._fgcolor = fgcolor
+            self._bgcolor = bgcolor
             return
 
         regionx, regiony, regionwidth, regionheight = self.getregion(region)
