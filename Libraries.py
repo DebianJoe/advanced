@@ -140,6 +140,7 @@ class MonsterLibrary(Library):
                 Utilities.rollHitDie(monster_data['hitdie'])
         newMonster._currentHitPoints = newMonster._baseMaxHitPoints
         newMonster._name = monster_data['name']
+        newMonster._color = eval(monster_data['color'])
         #Character components
 
         newMonster._baseDefense = int(monster_data['defense'])

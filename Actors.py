@@ -128,6 +128,15 @@ class Actor(object):
     def inView(self, visible):
         self._inView = visible
 
+    _color = (255, 255, 255)
+
+    @property
+    def color(self):
+        """
+        This actors preferred color (RGB tuple).
+        """
+        return self._color
+
     #Constructor
     def __init__(self):
         """
@@ -142,6 +151,7 @@ class Actor(object):
         self._name = 'Nameless'
         self._tile = None
         self._level = None
+        self._color = (255, 255, 255)
 
     #functions
     def __str__(self):
@@ -247,6 +257,8 @@ class Portal(Actor):
         Constructor to create a new portal
         """
         super(Portal, self).__init__()
+        #portals are purple
+        self._color = (191, 0, 255)
 
     def connectTo(self, otherPortal):
         """

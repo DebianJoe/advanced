@@ -11,6 +11,7 @@ import pygame
 from Game import Game
 from Game import Player
 import Actors
+import Libraries
 import Maps
 import CONSTANTS
 import Utilities
@@ -343,10 +344,10 @@ class ApplicationPygcurse():
         This function ties into the debug menu. It is meant to allow execution
         of some test code. Feel free to change the contents of this function.
         """
-        #lib = MonsterLibrary()
+        lib = Libraries.MonsterLibrary()
         #myRandom = lib.getRandomMonster(2)
-        #myRat = lib.createMonster('rat')
-        #print myRat
+        myRat = lib.createMonster('rat')
+        print myRat.color
         #print myRandom
         #myRat.attack(myRandom)
         #myRat.attack(myRandom)
@@ -354,8 +355,9 @@ class ApplicationPygcurse():
 
         #myMap = Maps.TownMap(CONSTANTS.MAP_WIDTH, CONSTANTS.MAP_HEIGHT)
         #print myMap
-        text = "this is a very long and useless text.this is a very long and useless text."
-        self.showMessage("long test message", text)
+        
+        #text = "this is a very long and useless text.this is a very long and useless text."
+        #self.showMessage("long test message", text)
     ##########################################################################
     # GameScreen functions
     ##########################################################################
@@ -395,20 +397,12 @@ class ApplicationPygcurse():
             # includes Monsters and Portals
             for myActor in tile.actors:
                 if myActor.inView:
-                    actor_color = colors.white
-                    # NOTE if the Actor base stores it's own color there is no
-                    # need for type checking.
-                    if type(myActor) is Actors.Portal:
-                        actor_color = colors.purple
-                    elif type(myActor) is Actors.Monster:
-                        actor_color = colors.green
-                    self.win.putchar(myActor.char, tile.x, tile.y)
+                    self.win.putchar(myActor.char, tile.x, tile.y, fgcolor=myActor.color)
 
             #Redraw player character (makes sure it is on top)
             player = self.game.player
-
             self.win.putchar(
-                player.char, player.tile.x, player.tile.y, fgcolor=colors.white)
+                player.char, player.tile.x, player.tile.y, fgcolor=player.color)
 
         # show game messages via a PygcurseTextbox.
         message_box = pygcurse.PygcurseTextbox(
