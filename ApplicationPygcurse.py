@@ -11,6 +11,7 @@ from time import sleep
 # the Game module will chain load other modules
 from Game import Game
 from Game import Player
+from Effects import EffectTarget
 import Actors
 import Libraries
 import Maps
@@ -448,9 +449,12 @@ class ApplicationPygcurse():
         
         #show on-going effects
         for effectTuple in self.effects:
-            effectColor, effectTiles = effectTuple
-            self._flashBgColor(effectColor, effectTiles)
-            
+            effect, effectTiles = effectTuple
+            #TODO: Create specific 'flashing' implementations for different effect types.
+            if effect.targetType == EffectTarget.SELF:
+                self._flashBgColor(effect.effectColor, effectTiles)
+            elif effect.targetType == EffectTarget.AREA:
+                self._flashBgColor(effect.effectColor, effectTiles)
         self._effects = []
 
         self.win.update()
@@ -467,8 +471,8 @@ class ApplicationPygcurse():
             self.win.update()
             sleep(0.10)
 
-    def registerEffect(self, effectColor, effectTiles):
-        self.effects.append((effectColor, effectTiles))
+    def registerEffect(self, effect, effectTiles):
+        self.effects.append((effect, effectTiles))
         
     def renderBar(self, x, y, total_width,
             name, value, maximum, bar_color, back_color):

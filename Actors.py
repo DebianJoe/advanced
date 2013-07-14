@@ -229,6 +229,15 @@ class Actor(object):
         #move along the vector
         self.moveAlongVector(dx, dy)
 
+    def takeDamage(self, amount, attacker):
+        """
+        base function to take damage from an attacker.
+        arguments
+           damage - the incoming damage
+           attacker - the attacking Actor
+        """
+        #base Actors are invulnerable
+        pass
 
 class Portal(Actor):
     """
@@ -678,7 +687,9 @@ class Player(Character):
         if isinstance(item, Consumable):
             #try to use the consumable
             if item.effect is not None and item.isConsumed is False:
-                if item.effect.targetType == Effects.Effect.SELF:
+                if item.effect.targetType == Effects.EffectTarget.SELF:
+                    item.applyTo(self)
+                elif item.effect.targetType == Effects.EffectTarget.AREA:
                     item.applyTo(self)
             #remove the item it is used up
             if item.isConsumed == True:

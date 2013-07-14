@@ -89,9 +89,9 @@ def message(text, category=None):
         #Default to console output
         print text
 
-def registerEffect(effectColor, effectTiles):
+def registerEffect(effect, effectTiles):
     if application is not None:
-        application.registerEffect(effectColor, effectTiles)
+        application.registerEffect(effect, effectTiles)
     
 def clamp(n, minn, maxn):
     """
