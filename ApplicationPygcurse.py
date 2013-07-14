@@ -5,6 +5,7 @@
 
 import pygcurse
 import pygame
+from time import sleep
 
 # You can import everything you need from module Game
 # the Game module will chain load other modules
@@ -90,7 +91,7 @@ class ApplicationPygcurse():
         returns the most recent game messages
         """
         return self._messages
-
+    
     def addMessage(self, new_msg):
         #split the message if necessary, among multiple lines
         new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
@@ -100,6 +101,15 @@ class ApplicationPygcurse():
                 del self.messages[0]
             #add the new line
             self.messages.append(line)  # (line, color) )
+
+    _effects = None
+
+    @property
+    def effects(self):
+        """
+        used to store game effects that have to be visualized
+        """
+        return self._effects
 
     def __init__(self):
         """
@@ -114,9 +124,10 @@ class ApplicationPygcurse():
         # we will call win.update() manually after everything is drawn
         self.win.autoupdate = False
 
-        #Prepare to receive messages from the game utilities
-        #(this allows the utilities to send game messages to this application)
+        #Prepare to receive messages and effects from the game utilities
+        #(this allows the utilities to send game messages and effects to this application)
         self._messages = []
+        self._effects = []
         Utilities.application = self
 
     def showMenu(self, header, options, width=20, height=10):
@@ -375,6 +386,11 @@ class ApplicationPygcurse():
         """
         This function renders the main screen
         """
+        #TODO: display names of objects under the mouse
+        # Frost: this would require running this loop constantly which is not
+        # happening at the moment. Currently it pauses to wait for the player to
+        # hit a key.
+        
         level = self.game.currentLevel
         for tile in level.map.explored_tiles:
             if tile.blocked:
@@ -429,14 +445,31 @@ class ApplicationPygcurse():
         if self.game.currentLevel is not None:
             #Dungeon level
             self.win.putchars(str(self.game.currentLevel.name), 2, 2)
+        
+        #show on-going effects
+        for effectTuple in self.effects:
+            effectColor, effectTiles = effectTuple
+            self._flashBgColor(effectColor, effectTiles)
+            
+        self._effects = []
 
         self.win.update()
+        
+    def _flashBgColor(self, color, tiles):
+        R, G, B = color
+        for i in range (0,4):
+            for tile in tiles:
+                self.win.settint(R, G, B,(tile.x, tile.y,1,1))
+            self.win.update()
+            sleep(0.10)
+            for tile in tiles:
+                self.win.settint(0, 0, 0,(tile.x, tile.y,1,1))
+            self.win.update()
+            sleep(0.10)
 
-        #TODO: display names of objects under the mouse
-        # Frost: this would require running this loop constantly which is not
-        # happening at the moment. Currently it pauses to wait for the player to
-        # hit a key.
-
+    def registerEffect(self, effectColor, effectTiles):
+        self.effects.append((effectColor, effectTiles))
+        
     def renderBar(self, x, y, total_width,
             name, value, maximum, bar_color, back_color):
         """

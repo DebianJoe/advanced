@@ -13,15 +13,6 @@ class Effect(object):
 
     #class variables
 
-    #_id = "ID not set"
-
-    #@property
-    #def id(self):
-        #"""
-        #ID code for this Effect
-        #"""
-        #return self._id
-
     _source = None
 
     @property
@@ -102,6 +93,9 @@ class HealEffect(MagicEffect):
         """
         healAmount = Utilities.rollHitDie(self.effectHitDie)
         target.takeHeal(healAmount, self.source)
+        effectTiles = [target.tile]
+        effectColor = (255,-255,-255)
+        Utilities.registerEffect(effectColor, effectTiles)
 
 
 

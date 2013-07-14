@@ -89,7 +89,10 @@ def message(text, category=None):
         #Default to console output
         print text
 
-
+def registerEffect(effectColor, effectTiles):
+    if application is not None:
+        application.registerEffect(effectColor, effectTiles)
+    
 def clamp(n, minn, maxn):
     """
     This function returns the number n limited to the range min-max.
