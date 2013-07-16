@@ -133,30 +133,14 @@ class NovaEffect(MagicEffect):
         """
         damageAmount = Utilities.rollHitDie(self.effectHitDie)
         #find all tiles that are impacted by the nova
-        effectTiles = []
         sourceTile = novaSource.tile
-        maxX = sourceTile.map.width - 1
-        maxY = sourceTile.map.height - 1
-        for ix in range (sourceTile.x - 2, sourceTile.x +3):
-            for iy in range (sourceTile.y - 2, sourceTile.y +3):
-                #tile has to be on the map
-                if ix >= 0 and iy >= 0 and ix <= maxX and iy <= maxY:
-                    #exclude the "corners"
-                    if ix == sourceTile.x - 2 and (iy == sourceTile.y - 2 or iy == sourceTile.y + 2):
-                        pass
-                    elif ix == sourceTile.x + 2 and (iy == sourceTile.y - 2 or iy == sourceTile.y + 2):
-                        pass
-                    #exlude the center of the nova
-                    elif ix == sourceTile.x and iy == sourceTile.y:
-                        pass
-                    else:
-                        possibleTile = sourceTile.map.tiles[ix][iy]
-                        #exclude blocked tiles
-                        if not possibleTile.blocked:
-                            effectTiles.append(possibleTile)
+        fullCircle = True
+        excludeBlockedTiles = True
+        effectTiles = sourceTile.map.getCircleTiles(sourceTile.x, sourceTile.y, 2, fullCircle, excludeBlockedTiles)
+        #exclude the center of the nova
+        effectTiles.remove(sourceTile)
         #find all targets in range
         targets = []
-        print 'target ' + str(effectTiles)
         for tile in effectTiles:
             for actor in tile.actors:
                 targets.append(actor)

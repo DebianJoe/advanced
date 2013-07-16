@@ -3,6 +3,7 @@
 import random
 import Utilities
 import CONSTANTS
+import math
 
 
 class Map(object):
@@ -164,6 +165,65 @@ class Map(object):
         levelArea = Room(self, 1, 1, self.width - 2, self.height - 2)
         return levelArea.getRandomEmptyTile()
 
+    def getCircleTiles(self, x, y, radius, fullCircle=False, excludeBlockedTiles=False):
+        """
+        Frost: This utility function returns an array of tiles that 
+        approximates a circle on the map.
+        Arguments
+            x - the x coordinate of the center of the circle
+            y - the y coordinate of the center of the circle
+            radius - the radius of the circle
+            fullCircle - when false only the tiles on the border of the 
+                circle are returned, when true all tiles inside.
+            excludeBlockedTiles - excludes blocked tiles
+        """
+        #prepare variables
+        circleTiles = []
+        maxX = self.width - 1
+        maxY = self.height - 1
+        #maxI is a relevant sample size, if it is to small it will lead to gaps in the circle.
+        #the following works for reasonably sized circles.
+        maxI = 6 * radius
+        halfMaxI = maxI / 2
+        if fullCircle:
+            #add center
+            circleTiles.append(self.tiles[x][y])
+        #go around the edge of the circle in maxI samples
+        for i in range(0, maxI):
+            #for each edge sample calculate the coordinates
+            xPos = int(round(x + radius * math.cos((math.pi/halfMaxI)*i)))
+            yPos = int(round(y + radius * math.sin((math.pi/halfMaxI)*i)))
+            #add relevant tiles between the found circle edge and the circle center
+            while xPos <> x or yPos <> y:
+                #tile has to be on the map
+                if xPos >= 0 and yPos >= 0 and xPos <= maxX and yPos <= maxY:
+                    #avoid adding duplicates
+                    if self.tiles[xPos][yPos] not in circleTiles:
+                        possibleTile = self.tiles[xPos][yPos]
+                        if excludeBlockedTiles:
+                            #exclude blocked tiles
+                            if not possibleTile.blocked:
+                                circleTiles.append(possibleTile)
+                        else:
+                            #include all tiles
+                            circleTiles.append(possibleTile)
+                if fullCircle:
+                    #move towards interior
+                    if xPos > x:
+                        xPos -= 1
+                    elif xPos < x:
+                        xPos += 1
+                    elif xPos == x:
+                        if yPos > y:
+                            yPos -= 1
+                        elif yPos < y:
+                            yPos += 1
+                else:
+                    #adding only the edge is enough
+                    break        
+        #return the found tiles that make up the circle   
+        return circleTiles
+    
     def __str__(self):
         """
         Basic way to print out a map, can be used to debug.
